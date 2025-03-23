@@ -16,9 +16,18 @@ class _MainScreenState extends State<MainScreen> {
           leading: CircleAvatar(radius: 25),
           title: const Text("Nour Amira"),
           actions: [
-            IconButton(onPressed: () {}, icon: Icon(Icons.call_rounded)),
-            IconButton(onPressed: () {}, icon: Icon(Icons.search_rounded)),
-            IconButton(onPressed: () {}, icon: Icon(Icons.menu_rounded)),
+            IconButton(
+              onPressed: () => debugPrint("Calls"),
+              icon: Icon(Icons.call_rounded),
+            ),
+            IconButton(
+              onPressed: () => debugPrint("Search"),
+              icon: Icon(Icons.search_rounded),
+            ),
+            IconButton(
+              onPressed: () => debugPrint("Menu"),
+              icon: Icon(Icons.menu_rounded),
+            ),
           ],
         ),
         body: Column(),
