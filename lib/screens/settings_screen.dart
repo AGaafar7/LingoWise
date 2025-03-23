@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:lingowise/custom/customs.dart';
+
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -21,11 +23,16 @@ class SettingsScreen extends StatelessWidget {
             Expanded(
               child: ListView.builder(
                 itemBuilder: (context, index) {
-                  return const SizedBox();
+                  //TODO: Create two lists of icons and titles and subtitle and the trailing icon
+                  return SettingsTile(
+                    leadingIcon: Icon(Icons.account_circle_rounded),
+                    tileTitle: "Account",
+                    tileSubtitle: "My Number",
+                    trailingIcon: Icon(Icons.arrow_forward_ios_rounded),
+                  );
                 },
               ),
             ),
-            Placeholder(color: Colors.red),
           ],
         ),
       ),
