@@ -7,7 +7,7 @@ import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  final client = StreamChatClient('YOUR_STREAM_API_KEY', logLevel: Level.INFO);
+  final client = StreamChatClient('8w7w6b93ktuu', logLevel: Level.INFO);
   runApp(MyApp(client: client));
 }
 

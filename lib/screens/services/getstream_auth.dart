@@ -7,10 +7,7 @@ class AuthService {
   AuthService(this.client);
 
   Future<String> getStreamToken(String userId) async {
-    final client = StreamChatClient(
-      'YOUR_STREAM_API_KEY',
-      logLevel: Level.INFO,
-    );
+    final client = StreamChatClient('8w7w6b93ktuu', logLevel: Level.INFO);
     return client.devToken(userId).rawValue;
   }
 
