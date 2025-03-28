@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lingowise/screens/screens.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -8,50 +9,83 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  int currIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      currIndex = index;
+    });
+  }
+
+  final List<Widget> screens = [
+    ChatMainScreen(),
+    CallsScreen(),
+    ContactScreen(),
+    SettingsScreen(),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        appBar: AppBar(
-          leading: CircleAvatar(radius: 25),
-          title: const Text("Nour Amira"),
-          actions: [
-            IconButton(
-              onPressed: () => debugPrint("Calls"),
-              icon: Icon(Icons.call_rounded),
+        body: IndexedStack(index: currIndex, children: screens),
+        bottomNavigationBar: _buildBottomNavBar(),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF071A2C), // Dark background
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildBottomNavItem(Icons.chat, "Chats", 0),
+          _buildBottomNavItem(Icons.phone, "Calls", 1),
+          _buildBottomNavItem(Icons.contacts, "Contacts", 2),
+          _buildBottomNavItem(Icons.settings, "Settings", 3),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavItem(IconData icon, String label, int index) {
+    bool isSelected = currIndex == index;
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.blue : Colors.transparent,
+              shape: BoxShape.circle,
             ),
-            IconButton(
-              onPressed: () => debugPrint("Search"),
-              icon: Icon(Icons.search_rounded),
+            child: Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.grey,
+              size: 28,
             ),
-            IconButton(
-              onPressed: () => debugPrint("Menu"),
-              icon: Icon(Icons.menu_rounded),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? Colors.white : Colors.grey,
             ),
-          ],
-        ),
-        body: Column(),
-        bottomNavigationBar: BottomNavigationBar(
-          items: [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_rounded),
-              label: "Chats",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.phone_forwarded_rounded),
-              label: "Calls",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.contact_page_rounded),
-              label: "Contacts",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_rounded),
-              label: "Settings",
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
+
+
