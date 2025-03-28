@@ -1,4 +1,4 @@
-package org.agaafar.lingowise
+package com.example.lingowise
 
 import io.flutter.embedding.android.FlutterActivity
 

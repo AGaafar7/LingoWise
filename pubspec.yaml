@@ -1,5 +1,5 @@
 name: lingowise
-description: "A new Flutter project."
+description: "An app that allows users to chat and communicate with each other in a fun and engaging way. It includes features such as voice chat, video chat, and text chat. And removes the language barrier by providing real-time translation of messages and voice chats."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -44,8 +44,7 @@ dependencies:
   firebase_auth: ^5.5.1
   google_sign_in: ^6.3.0
   stream_chat_flutter: ^9.6.0
-  cloud_firestore: ^5.6.5
-  
+  cloud_firestore: ^5.6.5 
 
 
 
