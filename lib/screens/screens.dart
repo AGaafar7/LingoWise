@@ -12,3 +12,6 @@ export 'contact_screen.dart';
 export 'main_chat_screen.dart';
 export 'auth/login_screen.dart';
 export 'auth/register_screen.dart';
+export 'auth/phone_verification_screen.dart';
+export 'services/getstream_auth.dart';
+export 'chat_screen.dart';

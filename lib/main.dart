@@ -2,25 +2,31 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:lingowise/screens/screens.dart';
 import 'package:lingowise/theme/app_theme.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(const MyApp());
+  final client = StreamChatClient('YOUR_STREAM_API_KEY', logLevel: Level.INFO);
+  runApp(MyApp(client: client));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final StreamChatClient client;
+  const MyApp({super.key, required this.client});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'LingoWise',
-      theme: appTheme,
+    return StreamChat(
+      client: client,
+      child: MaterialApp(
+        title: 'LingoWise',
+        theme: appTheme,
 
-      themeMode: ThemeMode.system,
+        themeMode: ThemeMode.system,
 
-      routes: {'/': (context) => LoginScreen()},
+        routes: {'/': (context) => LoginScreen()},
+      ),
     );
   }
 }

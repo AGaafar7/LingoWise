@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lingowise/screens/screens.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
+
 class ChatMainScreen extends StatefulWidget {
   const ChatMainScreen({super.key});
 
@@ -18,6 +21,8 @@ class _ChatMainScreenState extends State<ChatMainScreen>
 
   @override
   Widget build(BuildContext context) {
+    final client = StreamChat.of(context).client; // Moved here
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
@@ -40,30 +45,19 @@ class _ChatMainScreenState extends State<ChatMainScreen>
             padding: EdgeInsets.all(8.0),
             child: CircleAvatar(
               backgroundColor: Colors.amber,
-              child: Text("AG",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black)),
+              child: Text(
+                "AG",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
             ),
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.call),
-              onPressed: () {
-                // TODO: Implement call action
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                // TODO: Implement search functionality
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () {
-                // TODO: Implement menu options
-              },
-            ),
+            IconButton(icon: const Icon(Icons.call), onPressed: () {}),
+            IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+            IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
           ],
           bottom: TabBar(
             controller: _tabController,
@@ -80,49 +74,54 @@ class _ChatMainScreenState extends State<ChatMainScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildChatList(),
-          _buildChatList(),
-          _buildChatList(),
-          _buildChatList(),
+          _buildChatList(client), // All chats
+          _buildChatList(client), // Chats tab
+          _buildEmptyState("No Groups yet"), // Empty Groups tab
+          _buildEmptyState("No Channels yet"), // Empty Channels tab
         ],
       ),
     );
   }
 
-  Widget _buildChatList() {
-    return ListView(
-      children: [
-        ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.blueGrey,
-            child: Text("C"),
+  /// Builds the chat list for "All" and "Chats" tabs
+  Widget _buildChatList(StreamChatClient client) {
+    return StreamChannelListView(
+      controller: StreamChannelListController(
+        client: client,
+        filter: Filter.in_('members', [client.state.currentUser!.id]),
+        channelStateSort: [
+          SortOption<ChannelState>(
+            'last_message_at',
+            direction: SortOption.DESC,
           ),
-          title: const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Comera",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              Text("3/23/25",
-                  style: TextStyle(fontSize: 14, color: Colors.grey)),
-            ],
+        ],
+      ),
+      onChannelTap: (channel) async {
+        await channel.watch();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(client: client, channel: channel),
           ),
-          subtitle: const Text(
-            "Hello! Welcome to Comera. Catch up with fr...",
-            style: TextStyle(color: Colors.grey),
+        );
+      },
+    );
+  }
+
+  /// Builds an empty state for "Groups" and "Channels" tabs
+  Widget _buildEmptyState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.group, size: 80, color: Colors.grey),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            style: const TextStyle(fontSize: 18, color: Colors.grey),
           ),
-          trailing: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              shape: BoxShape.circle,
-            ),
-            child: const Text("1", style: TextStyle(color: Colors.white)),
-          ),
-          onTap: () {
-            // TODO: Open chat
-          },
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
