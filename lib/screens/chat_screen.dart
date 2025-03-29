@@ -1,58 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:lingowise/screens/screens.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
+import 'package:lingowise/services/settings_service.dart';
 
 class ChatScreen extends StatelessWidget {
-  final StreamChatClient client;
-  final Channel channel;
-
-  const ChatScreen({super.key, required this.client, required this.channel});
+  const ChatScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return StreamChannel(
-      channel: channel,
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.black87,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: StreamBuilder<ChannelState>(
-            stream: channel.state?.channelStateStream,
-            builder: (context, snapshot) {
-              final name = channel.extraData['name'] ?? 'Chat';
-              return Text(name.toString());
+    final settingsService = SettingsService();
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: StreamChannelName(),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => StreamChannelInfo(),
+              );
             },
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.call),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => AgoraAudioCallScreen(
-                          channelName:
-                              channel.id!, // Use chat ID as Agora channel
-                          userId: client.state.currentUser!.id,
-                        ),
-                  ),
-                );
-              },
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamMessageListView(
+              showTypingIndicator: settingsService.getTypingIndicatorEnabled(),
+              showReadReceipts: settingsService.getReadReceiptsEnabled(),
             ),
-            IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-          ],
-        ),
-        body: Column(
-          children: [
-            Expanded(child: StreamMessageListView()),
-            const Divider(height: 1),
-            const StreamMessageInput(),
-          ],
-        ),
+          ),
+          const StreamMessageInput(),
+        ],
       ),
     );
   }
