@@ -73,10 +73,9 @@ class _AccountControlScreenState extends State<AccountControlScreen> {
                         MaterialPageRoute(builder: (context) => Placeholder()),
                       );
                     } else if (index == 4) {
-                      //TODO: Navigate to login screen
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => Placeholder()),
+                        MaterialPageRoute(builder: (context) => LoginScreen()),
                       );
                     }
                   },

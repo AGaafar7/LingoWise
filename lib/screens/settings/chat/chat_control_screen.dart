@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lingowise/theme/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class ChatControlScreen extends StatefulWidget {
   const ChatControlScreen({super.key});
@@ -63,17 +65,15 @@ class _ChatControlScreenState extends State<ChatControlScreen> {
   }
 
   void _showThemeDialog() {
-    //save the the selected theme in the app and reload with that theme
     showModalBottomSheet(
       context: context,
-      backgroundColor:
-          Theme.of(context).scaffoldBackgroundColor, // Dark theme compatible
-      shape: RoundedRectangleBorder(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
+        return Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
             return Padding(
               padding: const EdgeInsets.symmetric(
                 vertical: 16.0,
@@ -91,23 +91,25 @@ class _ChatControlScreenState extends State<ChatControlScreen> {
                   RadioListTile<String>(
                     title: const Text("Dark"),
                     value: "Dark",
-                    groupValue: selectedOption,
+                    groupValue:
+                        themeProvider.themeMode == ThemeMode.dark
+                            ? "Dark"
+                            : "Light",
                     onChanged: (value) {
-                      setState(() {
-                        selectedOption = value!;
-                      });
-                      Navigator.pop(context, selectedOption);
+                      themeProvider.toggleTheme(value!);
+                      Navigator.pop(context);
                     },
                   ),
                   RadioListTile<String>(
                     title: const Text("Light"),
                     value: "Light",
-                    groupValue: selectedOption,
+                    groupValue:
+                        themeProvider.themeMode == ThemeMode.light
+                            ? "Light"
+                            : "Dark",
                     onChanged: (value) {
-                      setState(() {
-                        selectedOption = value!;
-                      });
-                      Navigator.pop(context, selectedOption);
+                      themeProvider.toggleTheme(value!);
+                      Navigator.pop(context);
                     },
                   ),
                 ],
@@ -116,13 +118,7 @@ class _ChatControlScreenState extends State<ChatControlScreen> {
           },
         );
       },
-    ).then((value) {
-      if (value != null) {
-        setState(() {
-          selectedOption = value;
-        });
-      }
-    });
+    );
   }
 
   @override

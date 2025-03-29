@@ -1,4 +1,5 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:lingowise/screens/services/agora_token_generaor.dart';
 
 class AgoraService {
   static final _engine = createAgoraRtcEngine();
@@ -11,14 +12,26 @@ class AgoraService {
   }
 
   static Future<void> joinCall(String channelName) async {
-    String agoraToken =
-        "007eJxTYOj+rCK7de2szknVbc06v4pYBBk0LiU0mb78PW/h3gMT0uIVGBKNjZNNjJItjdPSLE2SzI0sE82SU81NTCzMjIEy5onewi/SGwIZGeTMmpkZGSAQxOdkyE0tLk5Mz8xLZ2AAAP"; // Get from Agora Console
+    String appId = "a33c42c93ff94b729a6ce74486333c7a";
+    String appCertificate =
+        "7c08652be9f34ac6924f47a5a288abd2"; // ⚠️ Do not expose in production!
+    int uid = 0;
+
+    // Generate token dynamically
+    String agoraToken = AgoraTokenGenerator.generateToken(
+      appId: appId,
+      appCertificate: appCertificate,
+      channelName: channelName,
+      uid: uid,
+    );
 
     await _engine.joinChannel(
       token: agoraToken,
       channelId: channelName,
-      uid: 0, // Agora assigns a random UID
+      uid: uid,
       options: const ChannelMediaOptions(),
     );
   }
+
+  static RtcEngine get engine => _engine;
 }

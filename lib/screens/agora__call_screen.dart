@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:lingowise/screens/services/agora_token_generaor.dart';
+import 'package:lingowise/screens/services/audio_capture_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class AgoraAudioCallScreen extends StatefulWidget {
@@ -17,15 +19,15 @@ class AgoraAudioCallScreen extends StatefulWidget {
 }
 
 class _AgoraAudioCallScreenState extends State<AgoraAudioCallScreen> {
-  RtcEngine? _engine; // 🔹 Make nullable to avoid null issues
+  final AudioCaptureService _audioCaptureService = AudioCaptureService();
+  RtcEngine? _engine;
   bool _isJoined = false;
   bool _hasError = false;
   String _errorMessage = "";
 
-  // 🔹 Secure your App ID & Token (Move these to a secure backend)
-  final String agoraAppId = "a33c42c93ff94b729a6ce74486333c7a";
-  final String agoraToken =
-      "007eJxTYOj+rCK7de2szknVbc06v4pYBBk0LiU0mb78PW/h3gMT0uIVGBKNjZNNjJItjdPSLE2SzI0sE82SU81NTCzMjIEy5onewi/SGwIZGeTMmpkZGSAQxOdkyE0tLk5Mz8xLZ2AAAP"; // Get from Agora Console
+  final String agoraAppId = "YOUR_APP_ID";
+  final String agoraAppCertificate =
+      "YOUR_APP_CERTIFICATE"; // ⚠️ Store securely!
 
   @override
   void initState() {
@@ -34,7 +36,7 @@ class _AgoraAudioCallScreenState extends State<AgoraAudioCallScreen> {
   }
 
   Future<void> _initAgora() async {
-    // 🔹 Request microphone permission & handle errors
+    // 🔹 Request microphone permission
     if (await Permission.microphone.request().isDenied) {
       setState(() {
         _hasError = true;
@@ -44,9 +46,8 @@ class _AgoraAudioCallScreenState extends State<AgoraAudioCallScreen> {
     }
 
     try {
-      _engine = createAgoraRtcEngine(); // 🔹 Create Agora engine
+      _engine = createAgoraRtcEngine();
       await _engine!.initialize(RtcEngineContext(appId: agoraAppId));
-
       await _engine!.enableAudio();
       await _engine!.setChannelProfile(
         ChannelProfileType.channelProfileCommunication,
@@ -56,6 +57,7 @@ class _AgoraAudioCallScreenState extends State<AgoraAudioCallScreen> {
         RtcEngineEventHandler(
           onJoinChannelSuccess: (RtcConnection connection, int uid) {
             setState(() => _isJoined = true);
+            _audioCaptureService.startRecording();
           },
           onUserOffline: (
             RtcConnection connection,
@@ -63,14 +65,24 @@ class _AgoraAudioCallScreenState extends State<AgoraAudioCallScreen> {
             UserOfflineReasonType reason,
           ) {
             setState(() => _isJoined = false);
+            _audioCaptureService.stopRecording();
           },
           onError: (ErrorCodeType err, String msg) {
             setState(() {
               _hasError = true;
               _errorMessage = "Agora Error: $msg";
             });
+            _audioCaptureService.stopRecording();
           },
         ),
+      );
+
+      // 🔹 Generate token dynamically before joining
+      String agoraToken = AgoraTokenGenerator.generateToken(
+        appId: agoraAppId,
+        appCertificate: agoraAppCertificate,
+        channelName: widget.channelName,
+        uid: int.tryParse(widget.userId) ?? 0,
       );
 
       await _engine!.joinChannel(
@@ -89,8 +101,9 @@ class _AgoraAudioCallScreenState extends State<AgoraAudioCallScreen> {
 
   @override
   void dispose() {
-    _engine?.leaveChannel(); // 🔹 Ensure proper cleanup
+    _engine?.leaveChannel();
     _engine?.release();
+    _audioCaptureService.stopRecording();
     super.dispose();
   }
 
