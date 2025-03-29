@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lingowise/screens/screens.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -11,114 +9,48 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-
   String? _verificationId;
 
   // ✅ Register with Email & Password
   Future<void> _registerWithEmail() async {
-    try {
-      await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-
-      // 🔵 Navigate to HomeScreen AFTER registering
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
+    final user = await _authService.registerWithEmail(
+      _emailController.text,
+      _passwordController.text,
+    );
+    if (user != null) _navigateToMainScreen();
   }
 
   // ✅ Register with Google
   Future<void> _registerWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return; // User canceled login
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      await _auth.signInWithCredential(credential);
-
-      // 🔵 Navigate to HomeScreen AFTER registering
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
+    final user = await _authService.registerWithGoogle();
+    if (user != null) _navigateToMainScreen();
   }
 
   // ✅ Register with Phone Number (OTP)
   Future<void> _registerWithPhone() async {
-    try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: _phoneController.text.trim(),
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          await _auth.signInWithCredential(credential);
-          // 🔵 Navigate to HomeScreen if auto-verified
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const MainScreen()),
-          );
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message ?? "Verification failed")),
-          );
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          setState(() {
-            _verificationId = verificationId;
-          });
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
+    _authService.registerWithPhone(_phoneController.text, (verificationId) {
+      setState(() {
+        _verificationId = verificationId;
+      });
+    });
   }
 
-  // ✅ Verify OTP Code and Sign in
+  // ✅ Verify OTP Code
   Future<void> _verifyOTP(String otp) async {
-    try {
-      final AuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId!,
-        smsCode: otp,
-      );
+    if (_verificationId == null) return;
+    final user = await _authService.verifyOTP(_verificationId!, otp);
+    if (user != null) _navigateToMainScreen();
+  }
 
-      await _auth.signInWithCredential(credential);
-
-      // 🔵 Navigate to HomeScreen AFTER successful phone verification
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
+  void _navigateToMainScreen() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const MainScreen()),
+    );
   }
 
   @override
@@ -160,6 +92,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               onPressed: _registerWithPhone,
               child: const Text("Register with Phone"),
             ),
+            _verificationId != null
+                ? TextField(
+                  decoration: const InputDecoration(labelText: "Enter OTP"),
+                  onSubmitted: _verifyOTP,
+                )
+                : Container(),
             TextButton(
               onPressed: () {
                 Navigator.push(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lingowise/screens/screens.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 
 class ChatMainScreen extends StatefulWidget {
@@ -11,11 +12,16 @@ class ChatMainScreen extends StatefulWidget {
 class _ChatMainScreenState extends State<ChatMainScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late Channel channel;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    final client = StreamChat.of(context).client;
+    channel = client.channel('messaging', id: 'test-channel');
+
+    channel.watch();
   }
 
   @override
@@ -107,7 +113,19 @@ class _ChatMainScreenState extends State<ChatMainScreen>
           (_, error) => Center(child: Text("Error: ${error.toString()}")),
       loadingBuilder: (_) => const Center(child: CircularProgressIndicator()),
       itemBuilder: (context, channels, index, defaultWidget) {
-        return defaultWidget; // Uses StreamChat’s default UI
+        return InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) =>
+                        ChatScreen(client: client, channel: channels[index]),
+              ),
+            );
+          },
+          child: defaultWidget,
+        ); // Uses StreamChat’s default UI
       },
     );
   }

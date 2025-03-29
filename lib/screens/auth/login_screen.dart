@@ -14,52 +14,49 @@ class _LoginScreenState extends State<LoginScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>(); // 🔹 Form validation key
 
   @override
   void initState() {
     super.initState();
-
-    // ✅ Fix: Delay navigation using `addPostFrameCallback`
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUserLoggedIn();
     });
   }
 
   void _checkUserLoggedIn() async {
-    await Future.delayed(Duration(milliseconds: 500)); // Add a delay
-    if (_auth.currentUser != null) {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
-      }
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (_auth.currentUser != null && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+      );
     }
   }
 
   // ✅ Login with Email & Password
   Future<void> _loginWithEmail() async {
+    if (!_formKey.currentState!.validate()) return; // 🔹 Validate inputs
+
     try {
       await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // ✅ Navigate after successful login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      _showErrorSnackBar(_getFriendlyErrorMessage(e));
     }
   }
 
   // ✅ Login with Google
   Future<void> _loginWithGoogle() async {
     try {
+      await GoogleSignIn().signOut(); // 🔹 Prevents cached issues
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return;
 
@@ -72,16 +69,43 @@ class _LoginScreenState extends State<LoginScreen> {
 
       await _auth.signInWithCredential(credential);
 
-      // ✅ Navigate after successful login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      _showErrorSnackBar(_getFriendlyErrorMessage(e));
     }
+  }
+
+  // ✅ Friendly Error Messages
+  String _getFriendlyErrorMessage(dynamic error) {
+    String errorMessage = "Something went wrong. Please try again.";
+
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'user-not-found':
+          errorMessage = "No user found with this email.";
+          break;
+        case 'wrong-password':
+          errorMessage = "Incorrect password. Please try again.";
+          break;
+        case 'invalid-email':
+          errorMessage = "Invalid email address format.";
+          break;
+        case 'network-request-failed':
+          errorMessage = "No internet connection.";
+          break;
+      }
+    }
+
+    return errorMessage;
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -90,39 +114,54 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(title: const Text("Login")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: "Email"),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: "Password"),
-              obscureText: true,
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _loginWithEmail,
-              child: const Text("Login with Email"),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _loginWithGoogle,
-              child: const Text("Login with Google"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                );
-              },
-              child: const Text("Don't have an account? Register"),
-            ),
-          ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: "Email"),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please enter your email.";
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _passwordController,
+                decoration: const InputDecoration(labelText: "Password"),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please enter your password.";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: _loginWithEmail,
+                child: const Text("Login with Email"),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: _loginWithGoogle,
+                child: const Text("Login with Google"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  );
+                },
+                child: const Text("Don't have an account? Register"),
+              ),
+            ],
+          ),
         ),
       ),
     );

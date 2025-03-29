@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lingowise/screens/screens.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 
 class ChatScreen extends StatelessWidget {
@@ -26,7 +27,22 @@ class ChatScreen extends StatelessWidget {
             },
           ),
           actions: [
-            IconButton(icon: const Icon(Icons.call), onPressed: () {}),
+            IconButton(
+              icon: const Icon(Icons.call),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => AgoraAudioCallScreen(
+                          channelName:
+                              channel.id!, // Use chat ID as Agora channel
+                          userId: client.state.currentUser!.id,
+                        ),
+                  ),
+                );
+              },
+            ),
             IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
           ],
         ),
