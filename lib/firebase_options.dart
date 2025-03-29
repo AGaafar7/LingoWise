@@ -64,6 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '392405607881',
     projectId: 'lingowise-8dde2',
     storageBucket: 'lingowise-8dde2.firebasestorage.app',
+    iosClientId: '392405607881-7i6s2dqhgdbpl3iss49ft2u2031m68lu.apps.googleusercontent.com',
     iosBundleId: 'org.agaafar.lingowise',
   );
 
@@ -73,6 +74,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '392405607881',
     projectId: 'lingowise-8dde2',
     storageBucket: 'lingowise-8dde2.firebasestorage.app',
+    iosClientId: '392405607881-7i6s2dqhgdbpl3iss49ft2u2031m68lu.apps.googleusercontent.com',
     iosBundleId: 'org.agaafar.lingowise',
   );
 
@@ -85,4 +87,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'lingowise-8dde2.firebasestorage.app',
     measurementId: 'G-NER7KNC8KY',
   );
+
 }

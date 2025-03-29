@@ -15,3 +15,4 @@ export 'auth/register_screen.dart';
 export 'auth/phone_verification_screen.dart';
 export 'services/getstream_auth.dart';
 export 'chat_screen.dart';
+export 'auth/auth_wrapper.dart';

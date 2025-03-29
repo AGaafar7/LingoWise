@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lingowise/screens/screens.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 
 class ChatMainScreen extends StatefulWidget {
@@ -21,21 +20,26 @@ class _ChatMainScreenState extends State<ChatMainScreen>
 
   @override
   Widget build(BuildContext context) {
-    final client = StreamChat.of(context).client; // Moved here
+    final client = StreamChat.of(context).client;
+    if (client.state.currentUser == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      ); // Handle null case
+    }
 
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: AppBar(
           backgroundColor: Colors.black87,
-          title: Column(
+          title: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 "Good Morning",
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
-              const Text(
+              Text(
                 "Ahmed Gaafar",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
@@ -83,32 +87,32 @@ class _ChatMainScreenState extends State<ChatMainScreen>
     );
   }
 
-  /// Builds the chat list for "All" and "Chats" tabs
+  /// Builds the chat list using StreamChat
   Widget _buildChatList(StreamChatClient client) {
     return StreamChannelListView(
       controller: StreamChannelListController(
         client: client,
-        filter: Filter.in_('members', [client.state.currentUser!.id]),
-        channelStateSort: [
-          SortOption<ChannelState>(
-            'last_message_at',
-            direction: SortOption.DESC,
-          ),
+        filter: Filter.and([
+          Filter.equal('type', 'messaging'), // Fetch only messaging channels
+          Filter.in_('members', [client.state.currentUser!.id]),
+        ]),
+        channelStateSort: const [
+          SortOption('last_message_at', direction: SortOption.DESC),
         ],
+        presence: true, // Keeps track of online presence
+        limit: 20, // Number of channels to fetch per page
       ),
-      onChannelTap: (channel) async {
-        await channel.watch();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatScreen(client: client, channel: channel),
-          ),
-        );
+      emptyBuilder: (_) => _buildEmptyState("No chats yet"),
+      errorBuilder:
+          (_, error) => Center(child: Text("Error: ${error.toString()}")),
+      loadingBuilder: (_) => const Center(child: CircularProgressIndicator()),
+      itemBuilder: (context, channels, index, defaultWidget) {
+        return defaultWidget; // Uses StreamChat’s default UI
       },
     );
   }
 
-  /// Builds an empty state for "Groups" and "Channels" tabs
+  /// Builds an empty state for Groups and Channels
   Widget _buildEmptyState(String message) {
     return Center(
       child: Column(

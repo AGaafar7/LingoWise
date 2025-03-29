@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lingowise/screens/screens.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,12 +25,15 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  void _checkUserLoggedIn() {
+  void _checkUserLoggedIn() async {
+    await Future.delayed(Duration(milliseconds: 500)); // Add a delay
     if (_auth.currentUser != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      }
     }
   }
 
