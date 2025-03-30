@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
@@ -26,7 +25,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Future<void> _initializeStreamClient() async {
-    await _authService.initializeStreamClient();
+     final user = _authService.currentUser;
+  if (user != null) {
+    await _authService.initializeStreamClient(user.uid);
+  }
   }
 
   @override

@@ -23,9 +23,9 @@ class LastSeenControl extends StatelessWidget {
             /// **Last Seen Row**
             ListTile(
               title: const Text("Last Seen"),
-              trailing: Row(
+              trailing: const Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Text("Everyone"),
                   SizedBox(width: 5),
                   Icon(Icons.arrow_forward_ios_rounded, size: 16),
@@ -42,9 +42,9 @@ class LastSeenControl extends StatelessWidget {
             ),
             ListTile(
               title: const Text("Who can see when I'm online"),
-              trailing: Row(
+              trailing: const Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Text("Everyone"),
                   SizedBox(width: 5),
                   Icon(Icons.arrow_forward_ios_rounded, size: 16),

@@ -10,7 +10,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        appBar: CustomAppBar(title: "Settings"),
+        appBar: const CustomAppBar(title: "Settings"),
         body: Column(
           children: [
             Expanded(
@@ -43,7 +43,7 @@ class SettingsScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AccountControlScreen(),
+                            builder: (context) => const AccountControlScreen(),
                           ),
                         );
                       } else if (index == 1) {
@@ -51,7 +51,7 @@ class SettingsScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => PrivacyControlScreen(),
+                            builder: (context) => const PrivacyControlScreen(),
                           ),
                         );
                       } else if (index == 2) {
@@ -59,14 +59,14 @@ class SettingsScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ChatControlScreen(),
+                            builder: (context) => const ChatControlScreen(),
                           ),
                         );
                       } else if (index == 3) {
                         //Show Help Page
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => HelpScreen()),
+                          MaterialPageRoute(builder: (context) => const HelpScreen()),
                         );
                       }
                     },
@@ -74,7 +74,7 @@ class SettingsScreen extends StatelessWidget {
                       leadingIcon: Icon(leadingIcons[index]),
                       tileTitle: titles[index],
                       tileSubtitle: tilesSubtitle[index],
-                      trailingIcon: Icon(Icons.arrow_forward_ios_rounded),
+                      trailingIcon: const Icon(Icons.arrow_forward_ios_rounded),
                     ),
                   );
                 },

@@ -18,7 +18,7 @@ class _ChatControlScreenState extends State<ChatControlScreen> {
       context: context,
       backgroundColor:
           Theme.of(context).scaffoldBackgroundColor, // Dark theme compatible
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
@@ -129,9 +129,9 @@ class _ChatControlScreenState extends State<ChatControlScreen> {
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
         ),
-        title: Text("Chat"),
+        title: const Text("Chat"),
       ),
       body: ListView(
         children: [

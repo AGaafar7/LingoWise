@@ -45,7 +45,7 @@ dependencies:
   flutter_contacts: ^1.1.9+2
   firebase_auth: ^4.15.3
   google_sign_in: ^6.2.1
-  stream_chat_flutter: ^6.9.0
+  stream_chat_flutter: 8.0.0
   cloud_firestore: ^4.15.5
   shared_preferences: ^2.2.2
   provider: ^6.1.1

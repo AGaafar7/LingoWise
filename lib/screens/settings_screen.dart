@@ -126,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ListTile(
                       title: const Text('System'),
                       onTap: () {
-                        themeProvider.setThemeMode(ThemeMode.system);
+                        themeProvider.toggleTheme("System");
                         _settingsService.setThemeMode(ThemeMode.system);
                         Navigator.pop(context);
                       },
@@ -134,7 +134,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ListTile(
                       title: const Text('Light'),
                       onTap: () {
-                        themeProvider.setThemeMode(ThemeMode.light);
+                        themeProvider.toggleTheme("Light");
                         _settingsService.setThemeMode(ThemeMode.light);
                         Navigator.pop(context);
                       },
@@ -142,7 +142,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ListTile(
                       title: const Text('Dark'),
                       onTap: () {
-                        themeProvider.setThemeMode(ThemeMode.dark);
+                        themeProvider.toggleTheme("Dark");
+
                         _settingsService.setThemeMode(ThemeMode.dark);
                         Navigator.pop(context);
                       },
@@ -279,4 +280,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-} 
+}

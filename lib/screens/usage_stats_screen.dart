@@ -44,7 +44,7 @@ class _UsageStatsScreenState extends State<UsageStatsScreen> {
     setState(() => _isLoading = true);
     
     try {
-      final units = await _subscriptionService.getUnits();
+      final units = await _subscriptionService.getRemainingUnits();
       final lastUsage = await _subscriptionService.getLastUsage();
       
       // Simulate usage history data (replace with real data in production)
@@ -74,9 +74,9 @@ class _UsageStatsScreenState extends State<UsageStatsScreen> {
       padding: const EdgeInsets.all(16),
       child: LineChart(
         LineChartData(
-          gridData: FlGridData(show: false),
+          gridData: const FlGridData(show: false),
           titlesData: FlTitlesData(
-            leftTitles: AxisTitles(
+            leftTitles: const AxisTitles(
               sideTitles: SideTitles(showTitles: false),
             ),
             bottomTitles: AxisTitles(
@@ -99,7 +99,7 @@ class _UsageStatsScreenState extends State<UsageStatsScreen> {
               isCurved: true,
               color: Colors.blue,
               barWidth: 3,
-              dotData: FlDotData(show: false),
+              dotData: const FlDotData(show: false),
             ),
           ],
         ),

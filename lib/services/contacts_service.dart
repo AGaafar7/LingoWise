@@ -37,7 +37,7 @@ class ContactsService {
   }
 
   Future<void> sendWhatsAppInvite(String phoneNumber) async {
-    final message = 'Join me on LingoWise! Download the app here: [App Store/Play Store Link]';
+    const message = 'Join me on LingoWise! Download the app here: [App Store/Play Store Link]';
     final encodedMessage = Uri.encodeComponent(message);
     final whatsappUrl = 'https://wa.me/$phoneNumber?text=$encodedMessage';
     
@@ -47,8 +47,8 @@ class ContactsService {
   }
 
   Future<void> sendEmailInvite(String email) async {
-    final subject = 'Join me on LingoWise!';
-    final body = 'Hi! I would like you to join me on LingoWise. You can download the app here: [App Store/Play Store Link]';
+    const subject = 'Join me on LingoWise!';
+    const body = 'Hi! I would like you to join me on LingoWise. You can download the app here: [App Store/Play Store Link]';
     final mailtoUrl = 'mailto:$email?subject=${Uri.encodeComponent(subject)}&body=${Uri.encodeComponent(body)}';
     
     if (await canLaunchUrl(Uri.parse(mailtoUrl))) {

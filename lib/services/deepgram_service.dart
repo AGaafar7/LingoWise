@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:http/http.dart' as http;
 import 'package:lingowise/services/translation_service.dart';
 
 class DeepgramService {
@@ -18,7 +17,7 @@ class DeepgramService {
     Function(String, String)? onData,
     Function(String)? onError,
   }) {
-    this.onTranscriptionReceived = onData;
+    onTranscriptionReceived = onData;
     this.onError = onError;
 
     try {

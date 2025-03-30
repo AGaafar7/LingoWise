@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lingowise/screens/language_selection_screen.dart';
 import 'package:lingowise/services/translation_service.dart' as translation;
 import 'package:lingowise/services/usage_tracking_service.dart' as usage;
 import 'package:lingowise/services/subscription_service.dart' as subscription;
@@ -19,9 +18,12 @@ class _TranslationScreenState extends State<TranslationScreen> {
   bool _isLoading = false;
   String? _error;
 
-  final translation.TranslationService _translationService = translation.TranslationService();
-  final usage.UsageTrackingService _usageTracking = usage.UsageTrackingService();
-  final subscription.SubscriptionService _subscriptionService = subscription.SubscriptionService();
+  final translation.TranslationService _translationService =
+      translation.TranslationService();
+  final usage.UsageTrackingService _usageTracking =
+      usage.UsageTrackingService();
+  final subscription.SubscriptionService _subscriptionService =
+      subscription.SubscriptionService();
 
   @override
   void initState() {
@@ -30,7 +32,7 @@ class _TranslationScreenState extends State<TranslationScreen> {
   }
 
   Future<void> _initializeServices() async {
-    await _translationService.initialize();
+    await _translationService.init();
     await _subscriptionService.initialize();
   }
 
@@ -48,14 +50,13 @@ class _TranslationScreenState extends State<TranslationScreen> {
     try {
       final hasUnits = await _subscriptionService.hasActiveSubscription();
       if (!hasUnits) {
-        setState(() => _error = 'No subscription units available. Please upgrade your plan.');
+        setState(() => _error =
+            'No subscription units available. Please upgrade your plan.');
         return;
       }
 
       final result = await _translationService.translate(
-        text: _sourceController.text,
-        sourceLanguage: _sourceLanguage,
-        targetLanguage: _targetLanguage,
+        _sourceController.text,
       );
 
       setState(() {
@@ -180,4 +181,4 @@ class _TranslationScreenState extends State<TranslationScreen> {
     _targetController.dispose();
     super.dispose();
   }
-} 
+}

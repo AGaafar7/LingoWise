@@ -16,9 +16,9 @@ class _AppLockScreenState extends State<AppLockScreen> {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {},
-          icon: Icon(Icons.arrow_back_ios_new_outlined),
+          icon: const Icon(Icons.arrow_back_ios_new_outlined),
         ),
-        title: Text("App Lock"),
+        title: const Text("App Lock"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

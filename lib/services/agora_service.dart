@@ -1,5 +1,5 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
-import 'package:lingowise/screens/services/agora_token_generaor.dart';
+import 'package:lingowise/services/agora_token_generaor.dart';
 
 class AgoraService {
   static final _engine = createAgoraRtcEngine();

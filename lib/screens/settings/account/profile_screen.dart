@@ -18,33 +18,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
         ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          CircleAvatar(radius: 25, backgroundColor: Colors.amber),
+          const CircleAvatar(radius: 25, backgroundColor: Colors.amber),
           Row(
             children: [
-              CircleAvatar(radius: 10),
-              Column(children: [Text("Name"), Text("Ahmed Gaafar")]),
-              IconButton(onPressed: () {}, icon: Icon(Icons.edit)),
+              const CircleAvatar(radius: 10),
+              const Column(children: [Text("Name"), Text("Ahmed Gaafar")]),
+              IconButton(onPressed: () {}, icon: const Icon(Icons.edit)),
             ],
           ),
-          Divider(),
+          const Divider(),
           Row(
             children: [
-              CircleAvatar(radius: 10),
-              Column(
+              const CircleAvatar(radius: 10),
+              const Column(
                 children: [Text("Status"), Text("Hello! I'm on LingoWise")],
               ),
-              IconButton(onPressed: () {}, icon: Icon(Icons.edit)),
+              IconButton(onPressed: () {}, icon: const Icon(Icons.edit)),
             ],
           ),
-          Divider(),
-          Row(
+          const Divider(),
+          const Row(
             children: [
               CircleAvatar(radius: 10),
               Column(children: [Text("QR Code")]),

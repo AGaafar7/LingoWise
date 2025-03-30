@@ -60,21 +60,24 @@ class _ContactsScreenState extends State<ContactsScreen> {
         final user = _contactsService.users[index];
         return ListTile(
           leading: CircleAvatar(
-            child: Text(user.name?[0] ?? user.id[0]),
+            child: Text(user.name[0] ?? user.id[0]),
           ),
           title: Text(user.name ?? user.id),
           subtitle: Text(user.id),
           trailing: IconButton(
             icon: const Icon(Icons.chat),
             onPressed: () async {
-              final channel = await _contactsService.createDirectMessageChannel(user.id);
+              final channel =
+                  await _contactsService.createDirectMessageChannel(user.id);
               if (channel != null && mounted) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => StreamChannel(
                       channel: channel,
-                      child: const ChatScreen(),
+                      child: ChatScreen(
+                        channel: channel,
+                      ),
                     ),
                   ),
                 );
@@ -179,4 +182,4 @@ class _ContactsScreenState extends State<ContactsScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
-} 
+}

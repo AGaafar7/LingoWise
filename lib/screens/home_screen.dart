@@ -12,13 +12,14 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final _groupNameController = TextEditingController();
   final _authService = AuthService();
   final _settingsService = SettingsService();
-  List<Channel> _groups = [];
-  bool _isLoading = true;
   late TabController _tabController;
+  bool _isLoading = true;
+  List<Channel> _groups = [];
 
   @override
   void initState() {
@@ -39,22 +40,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final client = _authService.streamClient;
     if (client == null) return;
 
-    // Apply online status setting
     if (!_settingsService.getOnlineStatusVisible()) {
-      await client.setInvisible();
+      await client.disconnectUser(flushChatPersistence: false);
     } else {
-      await client.setOnline();
+      await client.connectUser(
+        User(id: client.state.currentUser!.id),
+        client.devToken(client.state.currentUser!.id).rawValue,
+      );
     }
 
-    // Apply typing indicator setting
-    client.state.typingUsers.clear();
     if (!_settingsService.getTypingIndicatorEnabled()) {
-      client.state.typingUsers.clear();
+      for (var channel in client.state.channels.values) {
+        channel.state?.typingEvents.clear();
+      }
     }
 
-    // Apply read receipts setting
     if (!_settingsService.getReadReceiptsEnabled()) {
-      client.state.readUsers.clear();
+      for (var channel in client.state.channels.values) {
+        channel.state?.read.clear();
+      }
     }
   }
 
@@ -63,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       final client = _authService.streamClient;
       if (client == null) return;
 
-      final groups = await client.queryChannels(
+      final groupsStream = client.queryChannels(
         state: true,
         filter: Filter.and([
           Filter.in_('members', [client.state.currentUser!.id]),
@@ -71,9 +75,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ]),
       );
 
-      setState(() {
-        _groups = groups;
-        _isLoading = false;
+      groupsStream.listen((channels) {
+        setState(() {
+          _groups = channels;
+          _isLoading = false;
+        });
       });
     } catch (e) {
       if (mounted) {
@@ -173,10 +179,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => StreamChannel(
-                  channel: group,
-                  child: const GroupChatScreen(),
-                ),
+                builder: (context) => GroupChatScreen(channel: group),
               ),
             );
           },
@@ -231,38 +234,40 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 }
 
 class GroupChatScreen extends StatelessWidget {
-  const GroupChatScreen({super.key});
+  final Channel channel;
+
+  const GroupChatScreen({super.key, required this.channel});
 
   @override
   Widget build(BuildContext context) {
-    final settingsService = SettingsService();
-    
     return Scaffold(
       appBar: AppBar(
-        title: StreamChannelName(),
+        title: StreamChannelName(channel: channel),
         actions: [
           IconButton(
             icon: const Icon(Icons.group),
             onPressed: () {
-              // Show group info dialog
               showDialog(
                 context: context,
-                builder: (context) => StreamChannelInfo(),
+                builder: (context) => StreamChannelInfo(channel: channel),
               );
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamMessageListView(
-              showTypingIndicator: settingsService.getTypingIndicatorEnabled(),
-              showReadReceipts: settingsService.getReadReceiptsEnabled(),
-            ),
+      body: StreamChat(
+        client: channel.client,
+        child: StreamChannel(
+          channel: channel,
+          child: const Column(
+            children: [
+              Expanded(
+                child: StreamMessageListView(),
+              ),
+              StreamMessageInput(),
+            ],
           ),
-          const StreamMessageInput(),
-        ],
+        ),
       ),
     );
   }
@@ -275,4 +280,4 @@ class DirectMessagesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ContactsScreen();
   }
-} 
+}

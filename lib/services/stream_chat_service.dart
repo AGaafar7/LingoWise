@@ -6,6 +6,11 @@ class StreamChatService {
     logLevel: Level.INFO,
   );
 
+  // ✅ Add this method to initialize the client
+  static Future<StreamChatClient> initializeClient() async {
+    return client; // Return the existing client instance
+  }
+
   // 🔹 Get Stream Token (for development use only)
   static Future<String> getStreamToken(String userId) async {
     return client.devToken(userId).rawValue;

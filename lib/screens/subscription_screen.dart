@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lingowise/services/payment_result.dart';
 import 'package:lingowise/services/subscription_service.dart';
 import 'package:pay/pay.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -14,47 +14,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   final _subscriptionService = SubscriptionService();
   SubscriptionPackage? _selectedPackage;
   bool _isLoading = false;
-  final _paymentItems = <PaymentItem>[];
-  final _googlePayButton = GooglePayButton(
-    paymentConfiguration: PaymentConfiguration.fromJsonString(
-      '''{
-        "provider": "google_pay",
-        "data": {
-          "environment": "TEST",
-          "apiVersion": 2,
-          "apiVersionMinor": 0,
-           "merchantInfo": {
-          "merchantId": "BCR2DN4T27NY7HB4",
-          "merchantName": "lingowise"
-        },
-          "allowedPaymentMethods": [
-            {
-              "type": "CARD",
-              "data": {
-                "allowedAuthMethods": ["PAN_ONLY", "CRYPTOGRAM_3DS"],
-                "allowedCardNetworks": ["VISA", "MASTERCARD"]
-              }
-            }
-          ]
-        }
-      }''',
-    ),
-  );
-
-  final _applePayButton = ApplePayButton(
-    paymentConfiguration: PaymentConfiguration.fromJsonString(
-      '''{
-        "provider": "apple_pay",
-        "data": {
-          "merchantIdentifier": "merchant.com.lingowise.app",
-          "displayName": "LingoWise",
-          "merchantCapabilities": ["3DS", "debit", "credit"],
-          "merchantCapabilities": ["3DS", "debit", "credit"],
-          "allowedPaymentNetworks": ["visa", "masterCard", "amex"]
-        }
-      }''',
-    ),
-  );
+  final List<PaymentItem> _paymentItems = [];
 
   @override
   void initState() {
@@ -63,7 +23,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   Future<void> _initializeSubscriptionService() async {
-    await _subscriptionService.init();
+    await _subscriptionService.initialize();
     setState(() {});
   }
 
@@ -82,25 +42,32 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       PaymentItem(
         label: _selectedPackage!.name,
         amount: _selectedPackage!.price.toString(),
+        status: PaymentItemStatus.final_price,
       ),
     );
   }
 
-  Future<void> _handlePayment(PaymentResult result) async {
+  Future<void> _handlePayment(Map<String, dynamic> result) async {
     if (_selectedPackage == null) return;
 
     setState(() => _isLoading = true);
 
     try {
-      if (_selectedPackage!.isFree) {
-        await _subscriptionService.addUnits(_selectedPackage!.units);
-      } else {
-        // Handle payment result and add units
-        await _subscriptionService.addUnits(_selectedPackage!.units);
-      }
+      final status = result['status'] == 'success'
+          ? PaymentStatus.success
+          : PaymentStatus.failure;
 
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+      if (status == PaymentStatus.success) {
+        await _subscriptionService.addUnits(_selectedPackage!.units);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment successful!')),
+          );
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } else {
+        throw Exception('Payment failed');
       }
     } catch (e) {
       if (mounted) {
@@ -109,19 +76,81 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Widget _buildPaymentButtons() {
+    if (_selectedPackage == null || _selectedPackage!.isFree) {
+      return ElevatedButton(
+        onPressed: () => _handlePayment({'status': 'success'}),
+        child: const Text('Get Free Plan'),
+      );
+    }
+
+    return Column(
+      children: [
+        GooglePayButton(
+          paymentConfiguration: PaymentConfiguration.fromJsonString(
+            '''{
+              "provider": "google_pay",
+              "data": {
+                "environment": "TEST",
+                "apiVersion": 2,
+                "apiVersionMinor": 0,
+                "merchantInfo": {
+                  "merchantId": "BCR2DN4T27NY7HB4",
+                  "merchantName": "lingowise"
+                },
+                "allowedPaymentMethods": [
+                  {
+                    "type": "CARD",
+                    "data": {
+                      "allowedAuthMethods": ["PAN_ONLY", "CRYPTOGRAM_3DS"],
+                      "allowedCardNetworks": ["VISA", "MASTERCARD"]
+                    }
+                  }
+                ]
+              }
+            }''',
+          ),
+          paymentItems: _paymentItems,
+          onPaymentResult: _handlePayment,
+        ),
+        const SizedBox(height: 8),
+        ApplePayButton(
+          paymentConfiguration: PaymentConfiguration.fromJsonString(
+            '''{
+              "provider": "apple_pay",
+              "data": {
+                "merchantIdentifier": "merchant.com.lingowise.app",
+                "displayName": "LingoWise",
+                "merchantCapabilities": ["3DS", "debit", "credit"],
+                "allowedPaymentNetworks": ["visa", "masterCard", "amex"]
+              }
+            }''',
+          ),
+          paymentItems: _paymentItems,
+          onPaymentResult: _handlePayment,
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton(
+          onPressed: () {
+            // Handle PayPal payment
+          },
+          child: const Text('Pay with PayPal'),
+        ),
+      ],
+    );
   }
 
   Widget _buildPackageCard(SubscriptionPackage package) {
     final isSelected = _selectedPackage?.id == package.id;
-    final isFree = package.isFree;
 
     return Card(
       elevation: isSelected ? 4 : 1,
-      color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+      color:
+          isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
       child: InkWell(
         onTap: () => _selectPackage(package),
         child: Padding(
@@ -136,7 +165,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     package.name,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  if (!isFree)
+                  if (!package.isFree)
                     Text(
                       '\$${package.price}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -149,22 +178,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               Text(package.description),
               if (isSelected) ...[
                 const SizedBox(height: 16),
-                if (!isFree) ...[
-                  _googlePayButton,
-                  const SizedBox(height: 8),
-                  _applePayButton,
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Handle PayPal payment
-                    },
-                    child: const Text('Pay with PayPal'),
-                  ),
-                ] else
-                  ElevatedButton(
-                    onPressed: () => _handlePayment(PaymentResult()),
-                    child: const Text('Get Free Plan'),
-                  ),
+                _buildPaymentButtons(),
               ],
             ],
           ),
@@ -198,11 +212,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             const SizedBox(height: 24),
             ..._subscriptionService.packages.map(_buildPackageCard),
             const SizedBox(height: 24),
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator()),
+            if (_isLoading) const Center(child: CircularProgressIndicator()),
           ],
         ),
       ),
     );
   }
-} 
+}

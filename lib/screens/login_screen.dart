@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await AuthService().signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
-          name: _nameController.text.trim(),
+          username: _nameController.text.trim(),
         );
       }
     } catch (e) {
@@ -150,4 +150,4 @@ class _LoginScreenState extends State<LoginScreen> {
     _nameController.dispose();
     super.dispose();
   }
-} 
+}

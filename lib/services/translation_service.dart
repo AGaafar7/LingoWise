@@ -2,7 +2,6 @@
 import 'dart:convert';
 
 // Flutter imports
-import 'package:flutter/material.dart';
 
 // Third-party package imports
 import 'package:shared_preferences/shared_preferences.dart' as prefs;
@@ -19,9 +18,12 @@ class TranslationService {
   TranslationService._internal();
 
   late prefs.SharedPreferences _prefs;
-  static const String _apiKey = 'AIzaSyAHGIdW9Zz4tGMcDjS_AnQcmwKB-bdH25w'; // Replace with your API key
-  static const String _baseUrl = 'https://translation.googleapis.com/language/translate/v2';
-  final usage.UsageTrackingService _usageTracking = usage.UsageTrackingService();
+  static const String _apiKey =
+      'AIzaSyAHGIdW9Zz4tGMcDjS_AnQcmwKB-bdH25w'; // Replace with your API key
+  static const String _baseUrl =
+      'https://translation.googleapis.com/language/translate/v2';
+  final usage.UsageTrackingService _usageTracking =
+      usage.UsageTrackingService();
   final fb_auth.FirebaseAuth _auth = fb_auth.FirebaseAuth.instance;
 
   Future<void> init() async {
@@ -57,15 +59,16 @@ class TranslationService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final translatedText = data['data']['translations'][0]['translatedText'];
-        
+        final translatedText =
+            data['data']['translations'][0]['translatedText'];
+
         // Track usage after successful translation
         await _usageTracking.trackTranslationUsage(
           textLength: text.length,
           sourceLanguage: sourceLang,
           targetLanguage: targetLang,
         );
-        
+
         return translatedText;
       } else {
         throw Exception('Translation failed: ${response.statusCode}');
@@ -77,7 +80,7 @@ class TranslationService {
 
   Future<bool> hasEnoughUnits(int textLength) async {
     final subscriptionService = subscription.SubscriptionService();
-    final currentUnits = await subscriptionService.getUnits();
+    final currentUnits = await subscriptionService.getRemainingUnits();
     // Estimate 1 unit per 100 characters
     final requiredUnits = (textLength / 100).ceil();
     return currentUnits >= requiredUnits;
@@ -87,7 +90,7 @@ class TranslationService {
     final subscriptionService = subscription.SubscriptionService();
     // Estimate 1 unit per 100 characters
     final requiredUnits = (textLength / 100).ceil();
-    await subscriptionService.useUnits(requiredUnits);
+    await subscriptionService.deductUnits(requiredUnits);
   }
 
   // Get usage statistics
@@ -112,4 +115,4 @@ class TranslationService {
       endDate: endDate,
     );
   }
-} 
+}

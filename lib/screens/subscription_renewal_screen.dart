@@ -46,7 +46,7 @@ class SubscriptionRenewalScreen extends StatelessWidget {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SubscriptionScreen(),
+                      builder: (context) => const SubscriptionScreen(),
                     ),
                   );
                 },

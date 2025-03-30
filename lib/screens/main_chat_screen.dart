@@ -109,8 +109,8 @@ class _ChatMainScreenState extends State<ChatMainScreen>
         limit: 20, // Number of channels to fetch per page
       ),
       emptyBuilder: (_) => _buildEmptyState("No chats yet"),
-      errorBuilder:
-          (_, error) => Center(child: Text("Error: ${error.toString()}")),
+      errorBuilder: (_, error) =>
+          Center(child: Text("Error: ${error.toString()}")),
       loadingBuilder: (_) => const Center(child: CircularProgressIndicator()),
       itemBuilder: (context, channels, index, defaultWidget) {
         return InkWell(
@@ -118,9 +118,7 @@ class _ChatMainScreenState extends State<ChatMainScreen>
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder:
-                    (context) =>
-                        ChatScreen(client: client, channel: channels[index]),
+                builder: (context) => ChatScreen(channel: channels[index]),
               ),
             );
           },

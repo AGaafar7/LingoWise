@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 
 class SettingsService {
   static final SettingsService _instance = SettingsService._internal();

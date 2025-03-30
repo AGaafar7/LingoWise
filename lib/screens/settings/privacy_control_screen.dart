@@ -17,7 +17,7 @@ class _PrivacyControlScreenState extends State<PrivacyControlScreen> {
       context: context,
       backgroundColor:
           Theme.of(context).scaffoldBackgroundColor, // Dark theme compatible
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
@@ -79,7 +79,7 @@ class _PrivacyControlScreenState extends State<PrivacyControlScreen> {
       context: context,
       backgroundColor:
           Theme.of(context).scaffoldBackgroundColor, // Dark theme compatible
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
@@ -144,9 +144,9 @@ class _PrivacyControlScreenState extends State<PrivacyControlScreen> {
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
         ),
-        title: Text("Privacy"),
+        title: const Text("Privacy"),
       ),
       body: Column(
         children: [
@@ -182,7 +182,7 @@ class _PrivacyControlScreenState extends State<PrivacyControlScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => LastSeenControl(),
+                          builder: (context) => const LastSeenControl(),
                         ),
                       );
                     } else if (index == 1) {
@@ -191,7 +191,7 @@ class _PrivacyControlScreenState extends State<PrivacyControlScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AppLockScreen(),
+                          builder: (context) => const AppLockScreen(),
                         ),
                       );
                     } else if (index == 3) {
@@ -203,7 +203,7 @@ class _PrivacyControlScreenState extends State<PrivacyControlScreen> {
                     leadingIcon: Icon(leadingIcons[index]),
                     tileTitle: titles[index],
                     tileSubtitle: tilesSubtitle[index],
-                    trailingIcon: Icon(Icons.arrow_forward_ios_rounded),
+                    trailingIcon: const Icon(Icons.arrow_forward_ios_rounded),
                   ),
                 );
               },

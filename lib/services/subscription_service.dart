@@ -1,10 +1,7 @@
 // Flutter imports
-import 'package:flutter/material.dart';
 
 // Third-party package imports
 import 'package:shared_preferences/shared_preferences.dart' as prefs;
-import 'package:in_app_purchase/in_app_purchase.dart' as iap;
-import 'package:pay/pay.dart' as pay;
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 
@@ -31,7 +28,8 @@ class SubscriptionService {
   factory SubscriptionService() => _instance;
   SubscriptionService._internal();
 
-  final firestore.FirebaseFirestore _firestore = firestore.FirebaseFirestore.instance;
+  final firestore.FirebaseFirestore _firestore =
+      firestore.FirebaseFirestore.instance;
   final fb_auth.FirebaseAuth _auth = fb_auth.FirebaseAuth.instance;
   late prefs.SharedPreferences _prefs;
   List<SubscriptionPackage> _packages = [];
@@ -102,12 +100,13 @@ class SubscriptionService {
     ];
   }
 
-  Future<void> updateSubscriptionStatus(String userId, String packageId, int units) async {
+  Future<void> updateSubscriptionStatus(
+      String userId, String packageId, int units) async {
     final userRef = _firestore.collection('users').doc(userId);
-    
+
     await _firestore.runTransaction((transaction) async {
       final userDoc = await transaction.get(userRef);
-      
+
       if (!userDoc.exists) {
         transaction.set(userRef, {
           'subscriptionPackageId': packageId,
@@ -146,9 +145,57 @@ class SubscriptionService {
     return status['remainingUnits'] > 0;
   }
 
+  Future<DateTime?> getLastUsage() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return null;
+
+    final userDoc = await _firestore.collection('users').doc(userId).get();
+    if (!userDoc.exists) return null;
+
+    final lastUpdated = userDoc.data()?['lastUpdated'];
+    return lastUpdated != null
+        ? (lastUpdated as firestore.Timestamp).toDate()
+        : null;
+  }
+
   Future<int> getRemainingUnits() async {
     final status = await getSubscriptionStatus();
     return status['remainingUnits'] ?? 0;
+  }
+
+  Future<void> addUnits(int units) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    final userRef = _firestore.collection('users').doc(userId);
+
+    await _firestore.runTransaction((transaction) async {
+      final userDoc = await transaction.get(userRef);
+
+      if (userDoc.exists) {
+        final currentUnits = userDoc.data()?['remainingUnits'] ?? 0;
+        final newUnits = currentUnits + units;
+
+        transaction.update(userRef, {
+          'remainingUnits': newUnits,
+          'lastUpdated': firestore.FieldValue.serverTimestamp(),
+        });
+
+        await _prefs.setInt('remainingUnits', newUnits);
+      } else {
+        transaction.set(userRef, {
+          'subscriptionPackageId': 'custom', // You can set an appropriate ID
+          'remainingUnits': units,
+          'lastUpdated': firestore.FieldValue.serverTimestamp(),
+        });
+
+        await _prefs.setString('subscriptionPackageId', 'custom');
+        await _prefs.setInt('remainingUnits', units);
+      }
+    });
+
+    // Notify listeners about the change
+    _notifyListeners(true);
   }
 
   Future<void> deductUnits(int units) async {
@@ -156,20 +203,20 @@ class SubscriptionService {
     if (userId == null) return;
 
     final userRef = _firestore.collection('users').doc(userId);
-    
+
     await _firestore.runTransaction((transaction) async {
       final userDoc = await transaction.get(userRef);
-      
+
       if (userDoc.exists) {
         final currentUnits = userDoc.data()?['remainingUnits'] ?? 0;
         final newUnits = currentUnits - units;
-        
+
         if (newUnits >= 0) {
           transaction.update(userRef, {
             'remainingUnits': newUnits,
             'lastUpdated': firestore.FieldValue.serverTimestamp(),
           });
-          
+
           await _prefs.setInt('remainingUnits', newUnits);
         }
       }
@@ -181,7 +228,7 @@ class SubscriptionService {
     if (userId == null) return;
 
     final userRef = _firestore.collection('users').doc(userId);
-    
+
     await _firestore.runTransaction((transaction) async {
       transaction.update(userRef, {
         'subscriptionPackageId': null,
@@ -193,4 +240,4 @@ class SubscriptionService {
     await _prefs.remove('subscriptionPackageId');
     await _prefs.setInt('remainingUnits', 0);
   }
-} 
+}

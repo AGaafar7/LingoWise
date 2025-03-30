@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Language {
   final String code;
@@ -22,7 +22,8 @@ class LanguageSelectionScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _LanguageSelectionScreenState createState() => _LanguageSelectionScreenState();
+  _LanguageSelectionScreenState createState() =>
+      _LanguageSelectionScreenState();
 }
 
 class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
@@ -81,7 +82,9 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.isSourceLanguage ? 'Select Source Language' : 'Select Target Language',
+          widget.isSourceLanguage
+              ? 'Select Source Language'
+              : 'Select Target Language',
         ),
       ),
       body: Column(
@@ -124,4 +127,4 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
       ),
     );
   }
-} 
+}

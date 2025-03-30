@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
-import 'package:lingowise/screens/services/agora_token_generaor.dart';
-import 'package:lingowise/screens/services/audio_capture_service.dart';
-import 'package:lingowise/screens/services/deepgram_service.dart';
+import 'package:lingowise/services/agora_token_generaor.dart';
+import 'package:lingowise/services/audio_capture_service.dart';
+import 'package:lingowise/services/deepgram_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class AgoraAudioCallScreen extends StatefulWidget {

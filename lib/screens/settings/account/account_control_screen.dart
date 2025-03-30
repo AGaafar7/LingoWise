@@ -18,9 +18,9 @@ class _AccountControlScreenState extends State<AccountControlScreen> {
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
         ),
-        title: Text("Account"),
+        title: const Text("Account"),
       ),
       body: Column(
         children: [
@@ -57,25 +57,25 @@ class _AccountControlScreenState extends State<AccountControlScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ProfileScreen(),
+                          builder: (context) => const ProfileScreen(),
                         ),
                       );
                     } else if (index == 2) {
                       //TODO: Add Here A deletion popup
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => Placeholder()),
+                        MaterialPageRoute(builder: (context) => const Placeholder()),
                       );
                     } else if (index == 3) {
                       //TODO: Add Here changing number popup
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => Placeholder()),
+                        MaterialPageRoute(builder: (context) => const Placeholder()),
                       );
                     } else if (index == 4) {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
                       );
                     }
                   },
@@ -83,7 +83,7 @@ class _AccountControlScreenState extends State<AccountControlScreen> {
                     leadingIcon: Icon(leadingIcons[index]),
                     tileTitle: titles[index],
                     tileSubtitle: tilesSubtitle[index],
-                    trailingIcon: Icon(Icons.arrow_forward_ios_rounded),
+                    trailingIcon: const Icon(Icons.arrow_forward_ios_rounded),
                   ),
                 );
               },

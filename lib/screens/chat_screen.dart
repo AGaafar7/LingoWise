@@ -3,37 +3,43 @@ import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lingowise/services/settings_service.dart';
 
 class ChatScreen extends StatelessWidget {
-  const ChatScreen({super.key});
+  final Channel channel; // Add a required channel parameter
+
+  const ChatScreen({super.key, required this.channel});
 
   @override
   Widget build(BuildContext context) {
     final settingsService = SettingsService();
-    
-    return Scaffold(
-      appBar: AppBar(
-        title: StreamChannelName(),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => StreamChannelInfo(),
-              );
-            },
+
+    return StreamChannel(
+      channel: channel, // Provide the channel here
+      child: Scaffold(
+        appBar: AppBar(
+          title: StreamChannelName(
+            channel: channel,
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamMessageListView(
-              showTypingIndicator: settingsService.getTypingIndicatorEnabled(),
-              showReadReceipts: settingsService.getReadReceiptsEnabled(),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => StreamChannelInfo(
+                    channel: channel,
+                  ),
+                );
+              },
             ),
-          ),
-          const StreamMessageInput(),
-        ],
+          ],
+        ),
+        body: const Column(
+          children: [
+            Expanded(
+              child: StreamMessageListView(),
+            ),
+            StreamMessageInput(),
+          ],
+        ),
       ),
     );
   }

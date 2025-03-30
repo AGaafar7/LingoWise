@@ -18,10 +18,10 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   final List<Widget> screens = [
-    ChatMainScreen(),
-    CallsScreen(),
-    ContactScreen(),
-    SettingsScreen(),
+    const ChatMainScreen(),
+    const CallsScreen(),
+    const ContactScreen(),
+    const SettingsScreen(),
   ];
 
   @override
