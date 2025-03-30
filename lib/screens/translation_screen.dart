@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lingowise/screens/language_selection_screen.dart';
-import 'package:lingowise/services/translation_service.dart';
-import 'package:lingowise/services/subscription_service.dart';
+import 'package:lingowise/services/translation_service.dart' as translation;
+import 'package:lingowise/services/usage_tracking_service.dart' as usage;
+import 'package:lingowise/services/subscription_service.dart' as subscription;
 
 class TranslationScreen extends StatefulWidget {
   const TranslationScreen({Key? key}) : super(key: key);
@@ -11,85 +12,68 @@ class TranslationScreen extends StatefulWidget {
 }
 
 class _TranslationScreenState extends State<TranslationScreen> {
-  final TranslationService _translationService = TranslationService();
-  final TextEditingController _sourceTextController = TextEditingController();
-  final TextEditingController _targetTextController = TextEditingController();
+  final _sourceController = TextEditingController();
+  final _targetController = TextEditingController();
+  String _sourceLanguage = 'en';
+  String _targetLanguage = 'es';
   bool _isLoading = false;
-  String _sourceLanguage = 'English';
-  String _targetLanguage = 'Spanish';
+  String? _error;
+
+  final translation.TranslationService _translationService = translation.TranslationService();
+  final usage.UsageTrackingService _usageTracking = usage.UsageTrackingService();
+  final subscription.SubscriptionService _subscriptionService = subscription.SubscriptionService();
 
   @override
   void initState() {
     super.initState();
-    _loadLanguages();
+    _initializeServices();
   }
 
-  Future<void> _loadLanguages() async {
-    final sourceLang = await _translationService.getSourceLanguage();
-    final targetLang = await _translationService.getTargetLanguage();
-    setState(() {
-      _sourceLanguage = sourceLang;
-      _targetLanguage = targetLang;
-    });
-  }
-
-  Future<void> _selectLanguage(bool isSource) async {
-    final selectedLanguage = await Navigator.push<Language>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LanguageSelectionScreen(
-          isSourceLanguage: isSource,
-        ),
-      ),
-    );
-
-    if (selectedLanguage != null) {
-      setState(() {
-        if (isSource) {
-          _sourceLanguage = selectedLanguage.name;
-        } else {
-          _targetLanguage = selectedLanguage.name;
-        }
-      });
-    }
+  Future<void> _initializeServices() async {
+    await _translationService.initialize();
+    await _subscriptionService.initialize();
   }
 
   Future<void> _translate() async {
-    if (_sourceTextController.text.isEmpty) return;
-
-    final hasEnoughUnits = await _translationService.hasEnoughUnits(
-      _sourceTextController.text.length,
-    );
-
-    if (!hasEnoughUnits) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Not enough units. Please purchase more units.'),
-          action: SnackBarAction(
-            label: 'Purchase',
-            onPressed: null, // Navigate to subscription screen
-          ),
-        ),
-      );
+    if (_sourceController.text.isEmpty) {
+      setState(() => _error = 'Please enter text to translate');
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
     try {
-      final translatedText = await _translationService.translate(
-        _sourceTextController.text,
+      final hasUnits = await _subscriptionService.hasActiveSubscription();
+      if (!hasUnits) {
+        setState(() => _error = 'No subscription units available. Please upgrade your plan.');
+        return;
+      }
+
+      final result = await _translationService.translate(
+        text: _sourceController.text,
+        sourceLanguage: _sourceLanguage,
+        targetLanguage: _targetLanguage,
       );
-      await _translationService.useUnits(_sourceTextController.text.length);
+
       setState(() {
-        _targetTextController.text = translatedText;
+        _targetController.text = result;
+        _isLoading = false;
       });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Translation error: $e')),
+
+      // Track usage
+      await _usageTracking.trackTranslationUsage(
+        textLength: _sourceController.text.length,
+        sourceLanguage: _sourceLanguage,
+        targetLanguage: _targetLanguage,
       );
-    } finally {
-      setState(() => _isLoading = false);
+    } catch (e) {
+      setState(() {
+        _error = 'Translation failed: ${e.toString()}';
+        _isLoading = false;
+      });
     }
   }
 
@@ -103,50 +87,86 @@ class _TranslationScreenState extends State<TranslationScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Source Language Selection
-            ListTile(
-              title: const Text('From'),
-              subtitle: Text(_sourceLanguage),
-              trailing: const Icon(Icons.arrow_drop_down),
-              onTap: () => _selectLanguage(true),
-            ),
-            // Source Text Input
-            TextField(
-              controller: _sourceTextController,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                hintText: 'Enter text to translate',
-                border: OutlineInputBorder(),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _sourceLanguage,
+                    decoration: const InputDecoration(
+                      labelText: 'From',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'en', child: Text('English')),
+                      DropdownMenuItem(value: 'es', child: Text('Spanish')),
+                      DropdownMenuItem(value: 'fr', child: Text('French')),
+                      DropdownMenuItem(value: 'de', child: Text('German')),
+                      DropdownMenuItem(value: 'it', child: Text('Italian')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _sourceLanguage = value);
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _targetLanguage,
+                    decoration: const InputDecoration(
+                      labelText: 'To',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'en', child: Text('English')),
+                      DropdownMenuItem(value: 'es', child: Text('Spanish')),
+                      DropdownMenuItem(value: 'fr', child: Text('French')),
+                      DropdownMenuItem(value: 'de', child: Text('German')),
+                      DropdownMenuItem(value: 'it', child: Text('Italian')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _targetLanguage = value);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            // Translate Button
+            TextField(
+              controller: _sourceController,
+              decoration: const InputDecoration(
+                labelText: 'Enter text to translate',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 5,
+            ),
+            const SizedBox(height: 16),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             ElevatedButton(
               onPressed: _isLoading ? null : _translate,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-              ),
               child: _isLoading
                   ? const CircularProgressIndicator()
                   : const Text('Translate'),
             ),
             const SizedBox(height: 16),
-            // Target Language Selection
-            ListTile(
-              title: const Text('To'),
-              subtitle: Text(_targetLanguage),
-              trailing: const Icon(Icons.arrow_drop_down),
-              onTap: () => _selectLanguage(false),
-            ),
-            // Target Text Output
             TextField(
-              controller: _targetTextController,
-              maxLines: 5,
-              readOnly: true,
+              controller: _targetController,
               decoration: const InputDecoration(
-                hintText: 'Translation will appear here',
+                labelText: 'Translation',
                 border: OutlineInputBorder(),
               ),
+              maxLines: 5,
+              readOnly: true,
             ),
           ],
         ),
@@ -156,8 +176,8 @@ class _TranslationScreenState extends State<TranslationScreen> {
 
   @override
   void dispose() {
-    _sourceTextController.dispose();
-    _targetTextController.dispose();
+    _sourceController.dispose();
+    _targetController.dispose();
     super.dispose();
   }
 } 

@@ -65,9 +65,11 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     if (widget.isSourceLanguage) {
       await _prefs.setString('source_language_code', language.code);
       await _prefs.setString('source_language_name', language.name);
+      print('Selected source language: ${language.code}'); // Debug print
     } else {
       await _prefs.setString('target_language_code', language.code);
       await _prefs.setString('target_language_name', language.name);
+      print('Selected target language: ${language.code}'); // Debug print
     }
     if (mounted) {
       Navigator.pop(context, language);

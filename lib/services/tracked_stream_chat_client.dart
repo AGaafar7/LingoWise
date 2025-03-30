@@ -1,3 +1,4 @@
+import 'package:http/http.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lingowise/services/api_tracking_service.dart';
 

@@ -1,20 +1,31 @@
-import 'package:shared_preferences.dart';
-import 'package:http/http.dart' as http;
+// Dart core imports
 import 'dart:convert';
-import 'package:lingowise/services/usage_tracking_service.dart';
+
+// Flutter imports
+import 'package:flutter/material.dart';
+
+// Third-party package imports
+import 'package:shared_preferences/shared_preferences.dart' as prefs;
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+
+// Local imports
+import 'package:lingowise/services/usage_tracking_service.dart' as usage;
+import 'package:lingowise/services/subscription_service.dart' as subscription;
 
 class TranslationService {
   static final TranslationService _instance = TranslationService._internal();
   factory TranslationService() => _instance;
   TranslationService._internal();
 
-  late SharedPreferences _prefs;
+  late prefs.SharedPreferences _prefs;
   static const String _apiKey = 'AIzaSyAHGIdW9Zz4tGMcDjS_AnQcmwKB-bdH25w'; // Replace with your API key
   static const String _baseUrl = 'https://translation.googleapis.com/language/translate/v2';
-  final UsageTrackingService _usageTracking = UsageTrackingService();
+  final usage.UsageTrackingService _usageTracking = usage.UsageTrackingService();
+  final fb_auth.FirebaseAuth _auth = fb_auth.FirebaseAuth.instance;
 
   Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+    _prefs = await prefs.SharedPreferences.getInstance();
   }
 
   Future<String> getSourceLanguage() async {
@@ -65,7 +76,7 @@ class TranslationService {
   }
 
   Future<bool> hasEnoughUnits(int textLength) async {
-    final subscriptionService = SubscriptionService();
+    final subscriptionService = subscription.SubscriptionService();
     final currentUnits = await subscriptionService.getUnits();
     // Estimate 1 unit per 100 characters
     final requiredUnits = (textLength / 100).ceil();
@@ -73,7 +84,7 @@ class TranslationService {
   }
 
   Future<void> useUnits(int textLength) async {
-    final subscriptionService = SubscriptionService();
+    final subscriptionService = subscription.SubscriptionService();
     // Estimate 1 unit per 100 characters
     final requiredUnits = (textLength / 100).ceil();
     await subscriptionService.useUnits(requiredUnits);

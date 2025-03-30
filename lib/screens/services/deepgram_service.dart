@@ -1,70 +1,95 @@
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
+import 'package:lingowise/services/translation_service.dart';
 
 class DeepgramService {
   final String deepgramApiKey = "8496509144871c7ea74eae3ec336989b8582900a";
-  final String googleTranslateApiKey =
-      "AIzaSyAHGIdW9Zz4tGMcDjS_AnQcmwKB-bdH25w";
-  final String targetLanguage = "es"; // 🔹 Change this to your target language
-
+  final TranslationService _translationService = TranslationService();
   WebSocketChannel? _socket;
   Function(String, String)? onTranscriptionReceived;
+  Function(String)? onError;
 
-  void connectToDeepgram({Function(String, String)? onData}) {
-    onTranscriptionReceived = onData;
+  Future<void> init() async {
+    await _translationService.init();
+  }
 
-    final uri = Uri.parse(
-      "wss://api.deepgram.com/v1/listen?access_token=$deepgramApiKey&encoding=linear16&sample_rate=16000",
-    );
+  void connectToDeepgram({
+    Function(String, String)? onData,
+    Function(String)? onError,
+  }) {
+    this.onTranscriptionReceived = onData;
+    this.onError = onError;
 
-    _socket = WebSocketChannel.connect(uri);
+    try {
+      final uri = Uri.parse(
+        "wss://api.deepgram.com/v1/listen?access_token=$deepgramApiKey&encoding=linear16&sample_rate=16000",
+      );
 
-    _socket!.stream.listen(
-      (data) async {
-        final response = jsonDecode(data);
-        if (response["channel"]["alternatives"].isNotEmpty) {
-          String transcript =
-              response["channel"]["alternatives"][0]["transcript"];
+      _socket = WebSocketChannel.connect(uri);
 
-          // 🔹 Translate the text
-          String translatedText = await translateText(transcript);
+      _socket!.stream.listen(
+        (data) async {
+          try {
+            final response = jsonDecode(data);
+            if (response["channel"]["alternatives"].isNotEmpty) {
+              String transcript =
+                  response["channel"]["alternatives"][0]["transcript"];
 
-          if (onTranscriptionReceived != null) {
-            onTranscriptionReceived!(transcript, translatedText);
+              // Use TranslationService to translate with user-selected language
+              String translatedText = await _translationService.translate(transcript);
+
+              if (onTranscriptionReceived != null) {
+                onTranscriptionReceived!(transcript, translatedText);
+              }
+            }
+          } catch (e) {
+            print("Error processing transcription: $e");
+            if (this.onError != null) {
+              this.onError!("Error processing transcription: $e");
+            }
           }
-        }
-      },
-      onError: (error) => print("WebSocket Error: $error"),
-      onDone: () => print("WebSocket Closed"),
-    );
+        },
+        onError: (error) {
+          print("WebSocket Error: $error");
+          if (this.onError != null) {
+            this.onError!("WebSocket Error: $error");
+          }
+        },
+        onDone: () {
+          print("WebSocket Closed");
+          if (this.onError != null) {
+            this.onError!("WebSocket connection closed");
+          }
+        },
+      );
+    } catch (e) {
+      print("Error connecting to Deepgram: $e");
+      if (this.onError != null) {
+        this.onError!("Error connecting to Deepgram: $e");
+      }
+    }
   }
 
   void sendAudioData(List<int> audioData) {
-    _socket?.sink.add(audioData);
+    try {
+      _socket?.sink.add(audioData);
+    } catch (e) {
+      print("Error sending audio data: $e");
+      if (onError != null) {
+        onError!("Error sending audio data: $e");
+      }
+    }
   }
 
   void closeConnection() {
-    _socket?.sink.close();
-  }
-
-  Future<String> translateText(String text) async {
-    final url = Uri.parse(
-      "https://translation.googleapis.com/language/translate/v2?key=$googleTranslateApiKey",
-    );
-
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"q": text, "target": targetLanguage, "format": "text"}),
-    );
-
-    if (response.statusCode == 200) {
-      final jsonResponse = jsonDecode(response.body);
-      return jsonResponse["data"]["translations"][0]["translatedText"];
-    } else {
-      print("Translation Error: ${response.body}");
-      return text; // Return original text if translation fails
+    try {
+      _socket?.sink.close();
+    } catch (e) {
+      print("Error closing connection: $e");
+      if (onError != null) {
+        onError!("Error closing connection: $e");
+      }
     }
   }
 }

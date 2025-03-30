@@ -1,4 +1,5 @@
-import 'package:shared_preferences.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 
 class SettingsService {
@@ -102,4 +103,4 @@ class SettingsService {
   Future<void> clearAllSettings() async {
     await _prefs.clear();
   }
-} 
+}

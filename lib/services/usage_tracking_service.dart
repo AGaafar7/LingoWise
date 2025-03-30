@@ -1,13 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+// Third-party package imports
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 
 class UsageTrackingService {
   static final UsageTrackingService _instance = UsageTrackingService._internal();
   factory UsageTrackingService() => _instance;
   UsageTrackingService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final firestore.FirebaseFirestore _firestore = firestore.FirebaseFirestore.instance;
+  final fb_auth.FirebaseAuth _auth = fb_auth.FirebaseAuth.instance;
 
   Future<String?> getCurrentUserId() async {
     final user = _auth.currentUser;
@@ -23,7 +24,7 @@ class UsageTrackingService {
     if (userId == null) return;
 
     final usageData = {
-      'timestamp': FieldValue.serverTimestamp(),
+      'timestamp': firestore.FieldValue.serverTimestamp(),
       'textLength': textLength,
       'units': (textLength / 100).ceil(),
       'sourceLanguage': sourceLanguage,
@@ -50,13 +51,13 @@ class UsageTrackingService {
       if (!userDoc.exists) {
         transaction.set(userRef, {
           'totalUnitsUsed': units,
-          'lastUpdated': FieldValue.serverTimestamp(),
+          'lastUpdated': firestore.FieldValue.serverTimestamp(),
         });
       } else {
         final currentTotal = userDoc.data()?['totalUnitsUsed'] ?? 0;
         transaction.update(userRef, {
           'totalUnitsUsed': currentTotal + units,
-          'lastUpdated': FieldValue.serverTimestamp(),
+          'lastUpdated': firestore.FieldValue.serverTimestamp(),
         });
       }
     });

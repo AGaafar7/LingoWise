@@ -1,9 +1,22 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:lingowise/screens/services/stream_chat_service.dart';
+import 'package:lingowise/screens/services/stream_chat_service.dart' as stream;
+import 'package:stream_chat_flutter/stream_chat_flutter.dart' as stream_chat;
 
 class AuthService {
   final fb_auth.FirebaseAuth _auth = fb_auth.FirebaseAuth.instance;
+  stream_chat.StreamChatClient? _streamClient;
+
+  // Expose auth state changes with proper type
+  Stream<fb_auth.User?> get authStateChanges => _auth.authStateChanges().map((user) => user);
+
+  // Expose stream client
+  stream_chat.StreamChatClient? get streamClient => _streamClient;
+
+  // Initialize stream client
+  Future<void> initializeStreamClient() async {
+    _streamClient = await stream.StreamChatService.initializeClient();
+  }
 
   // 🔹 Get current user
   fb_auth.User? getCurrentUser() => _auth.currentUser;
@@ -20,7 +33,7 @@ class AuthService {
       fb_auth.User? user = userCredential.user;
 
       if (user != null) {
-        await StreamChatService.createUser(user.uid, user.email ?? "User");
+        await stream.StreamChatService.createUser(user.uid, user.email ?? "User");
       }
 
       return user;
@@ -42,7 +55,7 @@ class AuthService {
       fb_auth.User? user = userCredential.user;
 
       if (user != null) {
-        await StreamChatService.createUser(user.uid, user.email ?? "User");
+        await stream.StreamChatService.createUser(user.uid, user.email ?? "User");
       }
 
       return user;
@@ -72,7 +85,7 @@ class AuthService {
       fb_auth.User? user = userCredential.user;
 
       if (user != null) {
-        await StreamChatService.createUser(user.uid, user.email ?? "User");
+        await stream.StreamChatService.createUser(user.uid, user.email ?? "User");
       }
 
       return user;
@@ -123,7 +136,7 @@ class AuthService {
       fb_auth.User? user = userCredential.user;
 
       if (user != null) {
-        await StreamChatService.createUser(
+        await stream.StreamChatService.createUser(
           user.uid,
           user.phoneNumber ?? "User",
         );

@@ -1,7 +1,12 @@
+// Flutter imports
 import 'package:flutter/material.dart';
-import 'package:shared_preferences.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:pay/pay.dart';
+
+// Third-party package imports
+import 'package:shared_preferences/shared_preferences.dart' as prefs;
+import 'package:in_app_purchase/in_app_purchase.dart' as iap;
+import 'package:pay/pay.dart' as pay;
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 
 class SubscriptionPackage {
   final String id;
@@ -26,11 +31,9 @@ class SubscriptionService {
   factory SubscriptionService() => _instance;
   SubscriptionService._internal();
 
-  static const String _unitsKey = 'subscription_units';
-  static const String _hasSubscriptionKey = 'has_subscription';
-  static const String _lastUsageKey = 'last_usage';
-  static const int _lowUnitsThreshold = 10;
-  late SharedPreferences _prefs;
+  final firestore.FirebaseFirestore _firestore = firestore.FirebaseFirestore.instance;
+  final fb_auth.FirebaseAuth _auth = fb_auth.FirebaseAuth.instance;
+  late prefs.SharedPreferences _prefs;
   List<SubscriptionPackage> _packages = [];
   bool _isInitialized = false;
   final _subscriptionListeners = <Function(bool)>[];
@@ -52,8 +55,8 @@ class SubscriptionService {
     }
   }
 
-  Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+  Future<void> initialize() async {
+    _prefs = await prefs.SharedPreferences.getInstance();
     _initializePackages();
     _isInitialized = true;
   }
@@ -99,59 +102,95 @@ class SubscriptionService {
     ];
   }
 
-  Future<void> addUnits(int units) async {
-    final currentUnits = await getUnits();
-    await _prefs.setInt(_unitsKey, currentUnits + units);
-    await _prefs.setBool(_hasSubscriptionKey, true);
-    _notifyListeners(true);
-  }
-
-  Future<int> getUnits() async {
-    return _prefs.getInt(_unitsKey) ?? 0;
-  }
-
-  Future<bool> hasSubscription() async {
-    return _prefs.getBool(_hasSubscriptionKey) ?? false;
-  }
-
-  Future<bool> useUnits(int minutes) async {
-    final currentUnits = await getUnits();
-    if (currentUnits >= minutes) {
-      await _prefs.setInt(_unitsKey, currentUnits - minutes);
-      await _prefs.setString(_lastUsageKey, DateTime.now().toIso8601String());
-
-      // Check if units are running low
-      if (currentUnits - minutes <= _lowUnitsThreshold) {
-        _notifyListeners(false);
+  Future<void> updateSubscriptionStatus(String userId, String packageId, int units) async {
+    final userRef = _firestore.collection('users').doc(userId);
+    
+    await _firestore.runTransaction((transaction) async {
+      final userDoc = await transaction.get(userRef);
+      
+      if (!userDoc.exists) {
+        transaction.set(userRef, {
+          'subscriptionPackageId': packageId,
+          'remainingUnits': units,
+          'lastUpdated': firestore.FieldValue.serverTimestamp(),
+        });
+      } else {
+        transaction.update(userRef, {
+          'subscriptionPackageId': packageId,
+          'remainingUnits': units,
+          'lastUpdated': firestore.FieldValue.serverTimestamp(),
+        });
       }
+    });
 
-      // Check if units are depleted
-      if (currentUnits - minutes <= 0) {
-        await _prefs.setBool(_hasSubscriptionKey, false);
-        _notifyListeners(false);
+    await _prefs.setString('subscriptionPackageId', packageId);
+    await _prefs.setInt('remainingUnits', units);
+  }
+
+  Future<Map<String, dynamic>> getSubscriptionStatus() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return {};
+
+    final userDoc = await _firestore.collection('users').doc(userId).get();
+    if (!userDoc.exists) return {};
+
+    return {
+      'packageId': userDoc.data()?['subscriptionPackageId'],
+      'remainingUnits': userDoc.data()?['remainingUnits'] ?? 0,
+      'lastUpdated': userDoc.data()?['lastUpdated'],
+    };
+  }
+
+  Future<bool> hasActiveSubscription() async {
+    final status = await getSubscriptionStatus();
+    return status['remainingUnits'] > 0;
+  }
+
+  Future<int> getRemainingUnits() async {
+    final status = await getSubscriptionStatus();
+    return status['remainingUnits'] ?? 0;
+  }
+
+  Future<void> deductUnits(int units) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    final userRef = _firestore.collection('users').doc(userId);
+    
+    await _firestore.runTransaction((transaction) async {
+      final userDoc = await transaction.get(userRef);
+      
+      if (userDoc.exists) {
+        final currentUnits = userDoc.data()?['remainingUnits'] ?? 0;
+        final newUnits = currentUnits - units;
+        
+        if (newUnits >= 0) {
+          transaction.update(userRef, {
+            'remainingUnits': newUnits,
+            'lastUpdated': firestore.FieldValue.serverTimestamp(),
+          });
+          
+          await _prefs.setInt('remainingUnits', newUnits);
+        }
       }
-
-      return true;
-    }
-    return false;
+    });
   }
 
-  Future<DateTime?> getLastUsage() async {
-    final lastUsageStr = _prefs.getString(_lastUsageKey);
-    if (lastUsageStr != null) {
-      return DateTime.parse(lastUsageStr);
-    }
-    return null;
-  }
+  Future<void> resetSubscription() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
 
-  Future<bool> isRunningLowOnUnits() async {
-    final currentUnits = await getUnits();
-    return currentUnits <= _lowUnitsThreshold;
-  }
+    final userRef = _firestore.collection('users').doc(userId);
+    
+    await _firestore.runTransaction((transaction) async {
+      transaction.update(userRef, {
+        'subscriptionPackageId': null,
+        'remainingUnits': 0,
+        'lastUpdated': firestore.FieldValue.serverTimestamp(),
+      });
+    });
 
-  Future<void> clearSubscription() async {
-    await _prefs.setBool(_hasSubscriptionKey, false);
-    await _prefs.setInt(_unitsKey, 0);
-    _notifyListeners(false);
+    await _prefs.remove('subscriptionPackageId');
+    await _prefs.setInt('remainingUnits', 0);
   }
 } 
