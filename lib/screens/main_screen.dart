@@ -12,33 +12,20 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int currIndex = 0;
+  final _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
-    final authService = AuthService();
-
-    FirebaseAuth.instance.authStateChanges().listen((user) async {
+    // Listen to auth state changes but don't initialize Stream Chat here
+    // as it's already handled in AuthWrapper
+    FirebaseAuth.instance.authStateChanges().listen((user) {
       if (user != null) {
         print("✅ Firebase User Found: ${user.uid}");
-
-        // 🔹 Manually Initialize Stream Chat
-        await authService.initializeStreamClient(user.uid);
-
-        print("🔍 Checking Stream Chat user after initialization...");
-        if (authService.streamClient == null ||
-            authService.streamClient!.state.currentUser == null) {
-          print(
-              "❌ Stream Client still not initialized or user not authenticated in Stream!");
-        } else {
-          print(
-              "✅ Stream Chat authenticated as: ${authService.streamClient!.state.currentUser!.id}");
-        }
       } else {
         print("❌ No Firebase user found!");
       }
     });
-    setState(() {});
   }
 
   void _onItemTapped(int index) {
@@ -53,6 +40,7 @@ class _MainScreenState extends State<MainScreen> {
     const ContactScreen(),
     const SettingsScreen(),
   ];
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(

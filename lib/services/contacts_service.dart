@@ -10,27 +10,61 @@ class ContactsService {
   List<User> get users => _users;
   bool get isLoading => _isLoading;
 
-  Future<void> searchUsers(String query) async {
-    if (query.isEmpty) {
-      _users = [];
-      return;
-    }
-
+  Future<void> loadAllUsers() async {
     _isLoading = true;
     try {
       final client = _authService.streamClient;
-      if (client == null) return;
+      if (client == null) {
+        print("❌ Stream Chat client is null in loadAllUsers");
+        return;
+      }
 
+      print("🔍 Loading all users...");
       final response = await client.queryUsers(
-        filter: Filter.or([
-          Filter.autoComplete('name', query),
-          Filter.autoComplete('id', query),
+        filter: Filter.and([
+          Filter.notEqual('id', client.state.currentUser!.id),
         ]),
       );
 
-      _users = response.users.where((user) => user.id != client.state.currentUser!.id).toList();
+      _users = response.users;
+      print("✅ Loaded ${_users.length} users");
     } catch (e) {
-      print('Error searching users: $e');
+      print('❌ Error loading users: $e');
+    } finally {
+      _isLoading = false;
+    }
+  }
+
+  Future<void> searchUsers(String query) async {
+    _isLoading = true;
+    try {
+      final client = _authService.streamClient;
+      if (client == null) {
+        print("❌ Stream Chat client is null in searchUsers");
+        return;
+      }
+
+      if (query.isEmpty) {
+        print("🔍 Empty query, loading all users");
+        await loadAllUsers();
+        return;
+      }
+
+      print("🔍 Searching users with query: $query");
+      final response = await client.queryUsers(
+        filter: Filter.and([
+          Filter.notEqual('id', client.state.currentUser!.id),
+          Filter.or([
+            Filter.autoComplete('name', query),
+            Filter.autoComplete('id', query),
+          ]),
+        ]),
+      );
+
+      _users = response.users;
+      print("✅ Found ${_users.length} users matching query");
+    } catch (e) {
+      print('❌ Error searching users: $e');
     } finally {
       _isLoading = false;
     }

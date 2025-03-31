@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
-import 'package:lingowise/services/settings_service.dart';
 
 class ChatScreen extends StatelessWidget {
   final Channel channel; // Add a required channel parameter
@@ -9,8 +8,6 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settingsService = SettingsService();
-
     return StreamChannel(
       channel: channel, // Provide the channel here
       child: Scaffold(

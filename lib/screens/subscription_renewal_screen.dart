@@ -5,7 +5,7 @@ import 'package:lingowise/screens/subscription_screen.dart';
 class SubscriptionRenewalScreen extends StatelessWidget {
   final SubscriptionService _subscriptionService = SubscriptionService();
 
-  SubscriptionRenewalScreen({Key? key}) : super(key: key);
+  SubscriptionRenewalScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

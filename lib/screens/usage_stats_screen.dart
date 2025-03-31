@@ -4,7 +4,7 @@ import 'package:lingowise/screens/subscription_renewal_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class UsageStatsScreen extends StatefulWidget {
-  const UsageStatsScreen({Key? key}) : super(key: key);
+  const UsageStatsScreen({super.key});
 
   @override
   _UsageStatsScreenState createState() => _UsageStatsScreenState();

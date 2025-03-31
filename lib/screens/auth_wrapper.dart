@@ -16,6 +16,7 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   final _authService = auth.AuthService();
+  bool _isInitializing = false;
 
   @override
   void initState() {
@@ -24,9 +25,33 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Future<void> _initializeStreamClient() async {
-    final user = _authService.currentUser;
-    if (user != null) {
-      await _authService.initializeStreamClient(user.uid);
+    if (_isInitializing) return;
+    _isInitializing = true;
+
+    try {
+      final user = _authService.currentUser;
+      if (user != null) {
+        print("🔹 Starting Stream Chat initialization in AuthWrapper for user: ${user.uid}");
+        
+        // Check if already initialized
+        if (_authService.streamClient?.state.currentUser != null) {
+          print("✅ Stream Chat already initialized for user: ${_authService.streamClient?.state.currentUser?.id}");
+          return;
+        }
+
+        await _authService.initializeStreamClient(user.uid);
+        
+        // Verify initialization
+        if (_authService.streamClient?.state.currentUser == null) {
+          print("❌ Stream Chat initialization failed - no current user");
+        } else {
+          print("✅ Stream Chat initialized successfully for user: ${_authService.streamClient?.state.currentUser?.id}");
+        }
+      }
+    } catch (e) {
+      print("❌ Error initializing Stream Chat in AuthWrapper: $e");
+    } finally {
+      _isInitializing = false;
     }
   }
 
@@ -47,8 +72,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           return FutureBuilder<bool>(
             future: _checkSubscriptionStatus(),
             builder: (context, subscriptionSnapshot) {
-              if (subscriptionSnapshot.connectionState ==
-                  ConnectionState.waiting) {
+              if (subscriptionSnapshot.connectionState == ConnectionState.waiting) {
                 return const Scaffold(
                   body: Center(
                     child: CircularProgressIndicator(),
@@ -58,7 +82,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
               if (subscriptionSnapshot.data == true) {
                 final streamClient = _authService.streamClient;
-                if (streamClient == null) {
+                if (streamClient == null || streamClient.state.currentUser == null) {
                   return const Scaffold(
                     body: Center(
                       child: Text('Error: Stream Chat client not initialized'),

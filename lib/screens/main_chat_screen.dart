@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:stream_chat_flutter/stream_chat_flutter.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart' as stream;
 import 'chat_screen.dart';
+import 'package:lingowise/services/auth_service.dart';
 
 class ChatMainScreen extends StatefulWidget {
   const ChatMainScreen({super.key});
@@ -12,102 +13,135 @@ class ChatMainScreen extends StatefulWidget {
 class _ChatMainScreenState extends State<ChatMainScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late Channel channel;
+  stream.Channel? channel;
+  bool _isInitialized = false;
+  final _authService = AuthService();
+  bool _isInitializing = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final client = StreamChat.of(context).client;
-
-      // 🔍 Listen for reconnections & authentication
-      client.on(EventType.connectionRecovered).listen((event) {
-        if (client.state.currentUser != null) {
-          print(
-              "✅ Stream Chat authenticated as: ${client.state.currentUser!.id}");
-          _initializeChat(client);
-          setState(() {});
-        }
-      });
-
-      // ✅ Wait until authentication is confirmed
-      final bool authenticated = await _waitForAuthentication(client);
-
-      if (authenticated) {
-        print(
-            "✅ Stream Chat authenticated as: ${client.state.currentUser!.id}");
-        await _initializeChat(client);
-        setState(() {});
-      } else {
-        print("❌ Authentication timeout: Unable to get current user");
-      }
-    });
+    _initializeChat();
   }
 
-  /// Waits for the Stream Chat user authentication (up to 10 seconds).
-  Future<bool> _waitForAuthentication(StreamChatClient client) async {
-    int retryCount = 0;
-    while (client.state.currentUser == null && retryCount < 20) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      retryCount++;
-    }
-    return client.state.currentUser != null;
-  }
-
-  Future<void> _initializeChat(StreamChatClient client) async {
-    channel = client.channel('messaging', id: 'test-channel');
+  Future<void> _initializeChat() async {
+    if (_isInitialized || _isInitializing) return;
+    _isInitializing = true;
 
     try {
-      final channelState = await channel.query();
-      if (channelState.channel == null) {
-        print("🔄 Creating new channel...");
-        await channel.create();
-      } else {
-        print("✅ Channel already exists!");
+      // Get current Firebase user
+      final firebaseUser = _authService.currentUser;
+      if (firebaseUser == null) {
+        print("❌ No Firebase user found");
+        return;
       }
 
-      await channel.watch();
-      print("🔍 Watching 'test-channel'");
+      // Get or initialize Stream Chat client
+      final client = _authService.streamClient;
+      if (client == null) {
+        print("🔹 Initializing Stream Chat client for user: ${firebaseUser.uid}");
+        await _authService.initializeStreamClient(firebaseUser.uid);
+      }
+
+      // Get the updated client
+      final updatedClient = _authService.streamClient;
+      if (updatedClient == null || updatedClient.state.currentUser == null) {
+        print("❌ Stream Chat client not initialized");
+        return;
+      }
+
+      print("✅ Stream Chat client ready: ${updatedClient.state.currentUser!.id}");
+      
+      // Set up the channel
+      await _setupChannel(updatedClient);
+      setState(() => _isInitialized = true);
     } catch (e) {
-      print("❌ Error creating or watching channel: $e");
+      print("❌ Error during initialization: $e");
+    } finally {
+      _isInitializing = false;
+    }
+  }
+
+  Future<void> _setupChannel(stream.StreamChatClient client) async {
+    try {
+      // Create a unique channel ID based on the user's ID
+      final channelId = 'user-${client.state.currentUser!.id}';
+      channel = client.channel('messaging', id: channelId);
+      
+      final channelState = await channel!.query();
+      if (channelState.channel == null) {
+        print("🔄 Creating new channel for user: ${client.state.currentUser!.id}");
+        await channel!.create();
+      } else {
+        print("✅ Channel already exists for user: ${client.state.currentUser!.id}");
+      }
+
+      if (!channel!.state!.isUpToDate) {
+        await channel!.watch();
+        print("🔍 Watching channel: $channelId");
+      }
+    } catch (e) {
+      print("❌ Error setting up channel: $e");
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final client = StreamChat.of(context).client;
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
-    if (client.state.currentUser == null) {
-      return const Center(child: CircularProgressIndicator());
+  @override
+  Widget build(BuildContext context) {
+    final client = _authService.streamClient;
+
+    if (!_isInitialized || client == null || client.state.currentUser == null) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Initializing chat...'),
+            ],
+          ),
+        ),
+      );
     }
 
     return _buildMainUI(client);
   }
 
-  Widget _buildMainUI(StreamChatClient client) {
+  Widget _buildMainUI(stream.StreamChatClient client) {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: AppBar(
           backgroundColor: Colors.black87,
-          title: const Column(
+          title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Good Morning",
+              const Text("Good Morning",
                   style: TextStyle(fontSize: 16, color: Colors.grey)),
-              Text("Ahmed Gaafar",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                client.state.currentUser?.name ?? "User",
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
-          leading: const Padding(
-            padding: EdgeInsets.all(8.0),
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
             child: CircleAvatar(
               backgroundColor: Colors.amber,
-              child: Text("AG",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black)),
+              child: Text(
+                client.state.currentUser?.name.substring(0, 2).toUpperCase() ?? "U",
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
             ),
           ),
           actions: [
@@ -121,7 +155,6 @@ class _ChatMainScreenState extends State<ChatMainScreen>
               Tab(text: "All"),
               Tab(text: "Chats"),
               Tab(text: "Groups"),
-              Tab(text: "Channels"),
             ],
             indicatorColor: Colors.white,
           ),
@@ -133,29 +166,29 @@ class _ChatMainScreenState extends State<ChatMainScreen>
           _buildChatList(client),
           _buildChatList(client),
           _buildEmptyState("No Groups yet"),
-          _buildEmptyState("No Channels yet"),
         ],
       ),
     );
   }
 
-  Widget _buildChatList(StreamChatClient client) {
-    return StreamChannelListView(
-      controller: StreamChannelListController(
+  Widget _buildChatList(stream.StreamChatClient client) {
+    return stream.StreamChannelListView(
+      controller: stream.StreamChannelListController(
         client: client,
-        filter: Filter.and([
-          Filter.equal('type', 'messaging'),
-          Filter.in_('members', [client.state.currentUser!.id]),
+        filter: stream.Filter.and([
+          stream.Filter.equal('type', 'messaging'),
+          stream.Filter.in_('members', [client.state.currentUser!.id]),
         ]),
         channelStateSort: const [
-          SortOption('last_message_at', direction: SortOption.DESC),
+          stream.SortOption('last_message_at', direction: stream.SortOption.DESC),
         ],
         presence: true,
         limit: 20,
       ),
       emptyBuilder: (_) => _buildEmptyState("No chats yet"),
-      errorBuilder: (_, error) =>
-          Center(child: Text("Error: \${error.toString()}")),
+      errorBuilder: (_, error) => Center(
+        child: Text("Error: ${error.toString()}"),
+      ),
       loadingBuilder: (_) => const Center(child: CircularProgressIndicator()),
       itemBuilder: (context, channels, index, defaultWidget) {
         return InkWell(
@@ -180,8 +213,7 @@ class _ChatMainScreenState extends State<ChatMainScreen>
         children: [
           const Icon(Icons.group, size: 80, color: Colors.grey),
           const SizedBox(height: 10),
-          Text(message,
-              style: const TextStyle(fontSize: 18, color: Colors.grey)),
+          Text(message, style: const TextStyle(fontSize: 18, color: Colors.grey)),
         ],
       ),
     );
