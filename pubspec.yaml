@@ -54,11 +54,6 @@ dependencies:
   fl_chart: ^0.70.2
   web_socket_channel: ^3.0.2
   stream_chat_flutter: ^9.6.0
-dependency_overrides:
-  wakelock_plus:
-    git:
-      url: https://github.com/fluttercommunity/wakelock_plus.git
-      ref: main
 
 
 dev_dependencies:
