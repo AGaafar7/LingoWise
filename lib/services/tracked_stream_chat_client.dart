@@ -66,7 +66,17 @@ class TrackedStreamChatClient extends StreamChatClient {
 
   /// 🔹 Generate a Stream Chat token (for development)
   Future<String> createToken(String userId) async {
-    return devToken(userId).rawValue;
+    final token = devToken(userId).rawValue;
+    print("Generated Stream Chat Token: $token");
+
+    if (token.isEmpty) {
+      throw Exception("❌ Failed to generate Stream Chat token.");
+    }
+
+    // ✅ Set the Authorization header globally for all Dio requests
+    dio.options.headers['Authorization'] = "Bearer $token";
+
+    return token;
   }
 
   /// 🔹 Make an API call using Dio instead of modifying StreamChatClient's httpClient
@@ -75,17 +85,26 @@ class TrackedStreamChatClient extends StreamChatClient {
     final startTime = DateTime.now();
 
     try {
+      final token = devToken(userId).rawValue;
+      print("Using token for API call: $token");
+
+      final options = Options(headers: {
+        'Authorization': "Bearer $token",
+      });
+
       Response response;
       if (method == 'GET') {
-        response = await dio.get(endpoint, queryParameters: queryParams);
+        response = await dio.get(endpoint,
+            queryParameters: queryParams, options: options);
       } else if (method == 'POST') {
-        response =
-            await dio.post(endpoint, data: data, queryParameters: queryParams);
+        response = await dio.post(endpoint,
+            data: data, queryParameters: queryParams, options: options);
       } else if (method == 'PUT') {
-        response =
-            await dio.put(endpoint, data: data, queryParameters: queryParams);
+        response = await dio.put(endpoint,
+            data: data, queryParameters: queryParams, options: options);
       } else if (method == 'DELETE') {
-        response = await dio.delete(endpoint, queryParameters: queryParams);
+        response = await dio.delete(endpoint,
+            queryParameters: queryParams, options: options);
       } else {
         throw Exception('Unsupported HTTP method: $method');
       }
@@ -111,7 +130,7 @@ class TrackedStreamChatClient extends StreamChatClient {
       await _trackingService.trackApiCall(
         endpoint: endpoint,
         method: method,
-        statusCode: 500, // Assuming error status code
+        statusCode: 500,
         responseTime: responseTime,
         userId: userId,
         metadata: {

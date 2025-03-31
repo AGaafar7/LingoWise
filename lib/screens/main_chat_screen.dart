@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lingowise/screens/screens.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
+import 'chat_screen.dart';
 
 class ChatMainScreen extends StatefulWidget {
   const ChatMainScreen({super.key});
@@ -18,21 +18,75 @@ class _ChatMainScreenState extends State<ChatMainScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    final client = StreamChat.of(context).client;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final client = StreamChat.of(context).client;
+
+      // 🔍 Listen for reconnections & authentication
+      client.on(EventType.connectionRecovered).listen((event) {
+        if (client.state.currentUser != null) {
+          print(
+              "✅ Stream Chat authenticated as: ${client.state.currentUser!.id}");
+          _initializeChat(client);
+          setState(() {});
+        }
+      });
+
+      // ✅ Wait until authentication is confirmed
+      final bool authenticated = await _waitForAuthentication(client);
+
+      if (authenticated) {
+        print(
+            "✅ Stream Chat authenticated as: ${client.state.currentUser!.id}");
+        await _initializeChat(client);
+        setState(() {});
+      } else {
+        print("❌ Authentication timeout: Unable to get current user");
+      }
+    });
+  }
+
+  /// Waits for the Stream Chat user authentication (up to 10 seconds).
+  Future<bool> _waitForAuthentication(StreamChatClient client) async {
+    int retryCount = 0;
+    while (client.state.currentUser == null && retryCount < 20) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      retryCount++;
+    }
+    return client.state.currentUser != null;
+  }
+
+  Future<void> _initializeChat(StreamChatClient client) async {
     channel = client.channel('messaging', id: 'test-channel');
 
-    channel.watch();
+    try {
+      final channelState = await channel.query();
+      if (channelState.channel == null) {
+        print("🔄 Creating new channel...");
+        await channel.create();
+      } else {
+        print("✅ Channel already exists!");
+      }
+
+      await channel.watch();
+      print("🔍 Watching 'test-channel'");
+    } catch (e) {
+      print("❌ Error creating or watching channel: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final client = StreamChat.of(context).client;
+
     if (client.state.currentUser == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      ); // Handle null case
+      return const Center(child: CircularProgressIndicator());
     }
 
+    return _buildMainUI(client);
+  }
+
+  Widget _buildMainUI(StreamChatClient client) {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
@@ -41,27 +95,19 @@ class _ChatMainScreenState extends State<ChatMainScreen>
           title: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Good Morning",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              Text(
-                "Ahmed Gaafar",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
+              Text("Good Morning",
+                  style: TextStyle(fontSize: 16, color: Colors.grey)),
+              Text("Ahmed Gaafar",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             ],
           ),
           leading: const Padding(
             padding: EdgeInsets.all(8.0),
             child: CircleAvatar(
               backgroundColor: Colors.amber,
-              child: Text(
-                "AG",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
+              child: Text("AG",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black)),
             ),
           ),
           actions: [
@@ -84,33 +130,32 @@ class _ChatMainScreenState extends State<ChatMainScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildChatList(client), // All chats
-          _buildChatList(client), // Chats tab
-          _buildEmptyState("No Groups yet"), // Empty Groups tab
-          _buildEmptyState("No Channels yet"), // Empty Channels tab
+          _buildChatList(client),
+          _buildChatList(client),
+          _buildEmptyState("No Groups yet"),
+          _buildEmptyState("No Channels yet"),
         ],
       ),
     );
   }
 
-  /// Builds the chat list using StreamChat
   Widget _buildChatList(StreamChatClient client) {
     return StreamChannelListView(
       controller: StreamChannelListController(
         client: client,
         filter: Filter.and([
-          Filter.equal('type', 'messaging'), // Fetch only messaging channels
+          Filter.equal('type', 'messaging'),
           Filter.in_('members', [client.state.currentUser!.id]),
         ]),
         channelStateSort: const [
           SortOption('last_message_at', direction: SortOption.DESC),
         ],
-        presence: true, // Keeps track of online presence
-        limit: 20, // Number of channels to fetch per page
+        presence: true,
+        limit: 20,
       ),
       emptyBuilder: (_) => _buildEmptyState("No chats yet"),
       errorBuilder: (_, error) =>
-          Center(child: Text("Error: ${error.toString()}")),
+          Center(child: Text("Error: \${error.toString()}")),
       loadingBuilder: (_) => const Center(child: CircularProgressIndicator()),
       itemBuilder: (context, channels, index, defaultWidget) {
         return InkWell(
@@ -123,12 +168,11 @@ class _ChatMainScreenState extends State<ChatMainScreen>
             );
           },
           child: defaultWidget,
-        ); // Uses StreamChat’s default UI
+        );
       },
     );
   }
 
-  /// Builds an empty state for Groups and Channels
   Widget _buildEmptyState(String message) {
     return Center(
       child: Column(
@@ -136,10 +180,8 @@ class _ChatMainScreenState extends State<ChatMainScreen>
         children: [
           const Icon(Icons.group, size: 80, color: Colors.grey),
           const SizedBox(height: 10),
-          Text(
-            message,
-            style: const TextStyle(fontSize: 18, color: Colors.grey),
-          ),
+          Text(message,
+              style: const TextStyle(fontSize: 18, color: Colors.grey)),
         ],
       ),
     );

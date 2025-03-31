@@ -19,7 +19,7 @@ class TranslationService {
 
   late prefs.SharedPreferences _prefs;
   static const String _apiKey =
-      'AIzaSyAHGIdW9Zz4tGMcDjS_AnQcmwKB-bdH25w'; // Replace with your API key
+      'AIzaSyAHGIdW9Zz4tGMcDjS_AnQcmwKB-bdH25w';
   static const String _baseUrl =
       'https://translation.googleapis.com/language/translate/v2';
   final usage.UsageTrackingService _usageTracking =

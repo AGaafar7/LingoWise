@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:stream_chat_flutter/stream_chat_flutter.dart' as stream;
@@ -25,10 +24,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Future<void> _initializeStreamClient() async {
-     final user = _authService.currentUser;
-  if (user != null) {
-    await _authService.initializeStreamClient(user.uid);
-  }
+    final user = _authService.currentUser;
+    if (user != null) {
+      await _authService.initializeStreamClient(user.uid);
+    }
   }
 
   @override
@@ -48,7 +47,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
           return FutureBuilder<bool>(
             future: _checkSubscriptionStatus(),
             builder: (context, subscriptionSnapshot) {
-              if (subscriptionSnapshot.connectionState == ConnectionState.waiting) {
+              if (subscriptionSnapshot.connectionState ==
+                  ConnectionState.waiting) {
                 return const Scaffold(
                   body: Center(
                     child: CircularProgressIndicator(),
@@ -86,4 +86,4 @@ class _AuthWrapperState extends State<AuthWrapper> {
     final prefsInstance = await prefs.SharedPreferences.getInstance();
     return prefsInstance.getBool('has_subscription') ?? false;
   }
-} 
+}

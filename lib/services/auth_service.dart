@@ -20,12 +20,29 @@ class AuthService {
 
   // ✅ Initialize Stream Chat client for a user
   Future<void> initializeStreamClient(String userId) async {
-    _streamClient = TrackedStreamChatClient('8w7w6b93ktuu', userId: userId);
-    final token = await _streamClient!.createToken(userId);
-    await _streamClient!.connectUser(
+    print("🔹 Initializing Stream Chat for user: $userId");
+
+    final apikey = "8w7w6b93ktuu";
+    final client = TrackedStreamChatClient(apikey, userId: userId);
+
+    // Generate token
+    final token = await client.createToken(userId);
+    print("🔹 Stream Chat token generated: $token");
+
+    // Connect user
+    await client.connectUser(
       User(id: userId),
       token,
     );
+
+    if (client.state.currentUser == null) {
+      throw Exception("❌ Stream Chat authentication failed!");
+    } else {
+      print(
+          "✅ Stream Chat user authenticated: ${client.state.currentUser!.id}");
+    }
+
+    _streamClient = client; // Save the client instance
   }
 
   // ✅ Check if username exists in Firestore

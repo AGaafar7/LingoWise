@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:flutter/material.dart';
 import 'package:lingowise/screens/screens.dart';
+import 'package:lingowise/services/auth_service.dart' show AuthService;
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -10,6 +12,34 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int currIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final authService = AuthService();
+
+    FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (user != null) {
+        print("✅ Firebase User Found: ${user.uid}");
+
+        // 🔹 Manually Initialize Stream Chat
+        await authService.initializeStreamClient(user.uid);
+
+        print("🔍 Checking Stream Chat user after initialization...");
+        if (authService.streamClient == null ||
+            authService.streamClient!.state.currentUser == null) {
+          print(
+              "❌ Stream Client still not initialized or user not authenticated in Stream!");
+        } else {
+          print(
+              "✅ Stream Chat authenticated as: ${authService.streamClient!.state.currentUser!.id}");
+        }
+      } else {
+        print("❌ No Firebase user found!");
+      }
+    });
+    setState(() {});
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -23,7 +53,6 @@ class _MainScreenState extends State<MainScreen> {
     const ContactScreen(),
     const SettingsScreen(),
   ];
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -87,5 +116,3 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-
-
