@@ -21,7 +21,7 @@ class _ChatMainScreenState extends State<ChatMainScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _initializeChat();
   }
 
@@ -40,7 +40,8 @@ class _ChatMainScreenState extends State<ChatMainScreen>
       // Get or initialize Stream Chat client
       final client = _authService.streamClient;
       if (client == null) {
-        print("🔹 Initializing Stream Chat client for user: ${firebaseUser.uid}");
+        print(
+            "🔹 Initializing Stream Chat client for user: ${firebaseUser.uid}");
         await _authService.initializeStreamClient(firebaseUser.uid);
       }
 
@@ -51,8 +52,9 @@ class _ChatMainScreenState extends State<ChatMainScreen>
         return;
       }
 
-      print("✅ Stream Chat client ready: ${updatedClient.state.currentUser!.id}");
-      
+      print(
+          "✅ Stream Chat client ready: ${updatedClient.state.currentUser!.id}");
+
       // Set up the channel
       await _setupChannel(updatedClient);
       setState(() => _isInitialized = true);
@@ -68,13 +70,15 @@ class _ChatMainScreenState extends State<ChatMainScreen>
       // Create a unique channel ID based on the user's ID
       final channelId = 'user-${client.state.currentUser!.id}';
       channel = client.channel('messaging', id: channelId);
-      
+
       final channelState = await channel!.query();
       if (channelState.channel == null) {
-        print("🔄 Creating new channel for user: ${client.state.currentUser!.id}");
+        print(
+            "🔄 Creating new channel for user: ${client.state.currentUser!.id}");
         await channel!.create();
       } else {
-        print("✅ Channel already exists for user: ${client.state.currentUser!.id}");
+        print(
+            "✅ Channel already exists for user: ${client.state.currentUser!.id}");
       }
 
       if (!channel!.state!.isUpToDate) {
@@ -127,7 +131,8 @@ class _ChatMainScreenState extends State<ChatMainScreen>
                   style: TextStyle(fontSize: 16, color: Colors.grey)),
               Text(
                 client.state.currentUser?.name ?? "User",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -136,7 +141,8 @@ class _ChatMainScreenState extends State<ChatMainScreen>
             child: CircleAvatar(
               backgroundColor: Colors.amber,
               child: Text(
-                client.state.currentUser?.name.substring(0, 2).toUpperCase() ?? "U",
+                client.state.currentUser?.name.substring(0, 2).toUpperCase() ??
+                    "U",
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -145,9 +151,7 @@ class _ChatMainScreenState extends State<ChatMainScreen>
             ),
           ),
           actions: [
-            IconButton(icon: const Icon(Icons.call), onPressed: () {}),
             IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-            IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
           ],
           bottom: TabBar(
             controller: _tabController,
@@ -180,7 +184,8 @@ class _ChatMainScreenState extends State<ChatMainScreen>
           stream.Filter.in_('members', [client.state.currentUser!.id]),
         ]),
         channelStateSort: const [
-          stream.SortOption('last_message_at', direction: stream.SortOption.DESC),
+          stream.SortOption('last_message_at',
+              direction: stream.SortOption.DESC),
         ],
         presence: true,
         limit: 20,
@@ -213,7 +218,8 @@ class _ChatMainScreenState extends State<ChatMainScreen>
         children: [
           const Icon(Icons.group, size: 80, color: Colors.grey),
           const SizedBox(height: 10),
-          Text(message, style: const TextStyle(fontSize: 18, color: Colors.grey)),
+          Text(message,
+              style: const TextStyle(fontSize: 18, color: Colors.grey)),
         ],
       ),
     );

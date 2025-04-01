@@ -8,7 +8,7 @@ export 'settings/last_seen_control.dart';
 export 'settings/app_lock_screen.dart';
 export 'settings/chat/chat_control_screen.dart';
 export 'settings/help/help_screen.dart';
-export 'contact_screen.dart';
+export 'contacts_screen.dart';
 export 'main_chat_screen.dart';
 export 'auth/login_screen.dart';
 export 'auth/register_screen.dart';

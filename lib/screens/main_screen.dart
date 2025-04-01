@@ -37,7 +37,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> screens = [
     const ChatMainScreen(),
     const CallsScreen(),
-    const ContactScreen(),
+    ContactsScreen(),
     const SettingsScreen(),
   ];
 

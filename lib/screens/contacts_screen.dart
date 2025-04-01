@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:stream_chat_flutter/stream_chat_flutter.dart';
-import 'package:lingowise/services/contacts_service.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart' as stream_chat;
+import 'package:lingowise/services/contacts_service.dart' as contacts_service;
 import 'package:lingowise/screens/chat_screen.dart';
-import 'package:lingowise/services/auth_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lingowise/services/auth_service.dart' as auth_service;
 
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
@@ -13,10 +12,10 @@ class ContactsScreen extends StatefulWidget {
 }
 
 class _ContactsScreenState extends State<ContactsScreen> {
-  final ContactsService _contactsService = ContactsService();
-  final AuthService _authService = AuthService();
+  final contacts_service.ContactsService _contactsService = contacts_service.ContactsService();
+  final auth_service.AuthService _authService = auth_service.AuthService();
   final TextEditingController _searchController = TextEditingController();
-  bool _isLoading = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -24,28 +23,38 @@ class _ContactsScreenState extends State<ContactsScreen> {
     _initializeChatAndLoadUsers();
   }
 
-  // Initializes the Stream client and loads the users
   Future<void> _initializeChatAndLoadUsers() async {
     print("🔹 Initializing Stream Chat and loading contacts...");
 
-    await _authService.initializeStreamClient(_authService.currentUser?.uid);
+    // Initialize Stream Chat client
+    await _authService.initializeStreamClient(_authService.currentUser!.uid);
 
-    await _contactsService.loadAllUsers();
+    // Load contacts (could be from a network or local storage, like `flutter_contacts`)
+    await _contactsService.loadDeviceContacts();
 
+    // Debugging: Check the length of contacts
+    print("🧑‍🤝‍🧑 Contacts loaded: ${_contactsService.deviceContacts.length}");
+
+    // Load registered users
+    await _contactsService.loadDeviceContacts();
+
+    // Debugging: Check the length of registered users
+    print("🧑‍🤝‍🧑 Registered users loaded: ${_contactsService.registeredUsers.length}");
+
+    // Update UI if mounted
     if (mounted) {
-      setState(() {});
+      setState(() => _isLoading = false);
     }
   }
 
-  // Handle tap on user to create or fetch chat channel
-  Future<void> _handleUserTap(User user) async {
-    print("🔍 User tapped: ${user.id}");
-    
+  Future<void> _handleUserTap(stream_chat.User user) async {
+    print("🖱️ User tapped: ${user.id}");
+
     setState(() => _isLoading = true);
 
     try {
-      final channel = await _contactsService.createDirectMessageChannel(user.id);
-
+      final channel =
+          await _contactsService.createDirectMessageChannel(user.id);
       if (channel == null) {
         print("❌ Failed to create or fetch chat channel");
         return;
@@ -55,7 +64,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => StreamChannel(
+            builder: (context) => stream_chat.StreamChannel(
               channel: channel,
               child: ChatScreen(channel: channel),
             ),
@@ -76,15 +85,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
     }
   }
 
-  // Builds the list of users or handles UI when there are no users or the app is loading
   Widget _buildUserList() {
-    print("📌 Rendering user list with ${_contactsService.users.length} users");
-
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_contactsService.users.isEmpty) {
+    // Check if users are loaded
+    if (_contactsService.registeredUsers.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -92,11 +99,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
             const Text('No users found'),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () async {
-                print("🔄 Refreshing users...");
-                await _initializeChatAndLoadUsers();
-                setState(() {});
-              },
+              onPressed: _initializeChatAndLoadUsers,
               child: const Text('Refresh'),
             ),
           ],
@@ -105,22 +108,25 @@ class _ContactsScreenState extends State<ContactsScreen> {
     }
 
     return ListView.builder(
-  itemCount: _contactsService.users.length,
-  itemBuilder: (context, index) {
-    final user = _contactsService.users[index];
-
-    return ListTile(
-      leading: CircleAvatar(
-        child: Text(user.name.isNotEmpty ? user.name[0] : '?'),
-      ),
-      title: Text(user.name.isNotEmpty ? user.name : 'Unknown'),
-      subtitle: Text(user.id),
-      trailing: const Icon(Icons.chat),
-      onTap: () => _handleUserTap(user),  // Directly handle tap here
+      itemCount: _contactsService.registeredUsers.length,
+      itemBuilder: (context, index) {
+        final user = _contactsService.registeredUsers[index];
+        return GestureDetector(
+          onTap: () {
+            print("✅ GestureDetector tapped on ${user.id}");
+            _handleUserTap(user);
+          },
+          child: ListTile(
+            leading: CircleAvatar(
+              child: Text(user.name.isNotEmpty ? user.name[0] : '?'),
+            ),
+            title: Text(user.name.isNotEmpty ? user.name : 'Unknown'),
+            subtitle: Text(user.id),
+            trailing: const Icon(Icons.chat),
+          ),
+        );
+      },
     );
-  },
-);
-
   }
 
   @override
@@ -131,7 +137,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
       ),
       body: Column(
         children: [
-          // Search bar to filter users
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -157,8 +162,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
               },
             ),
           ),
-
-          // Displaying the user list or loading state
           Expanded(child: _buildUserList()),
         ],
       ),
