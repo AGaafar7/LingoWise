@@ -1,9 +1,17 @@
+import 'dart:async' show Completer;
+
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:flutter/material.dart'
+    show AlertDialog, BuildContext, Navigator, Text, TextButton, showDialog;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lingowise/main.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lingowise/services/tracked_stream_chat_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:lingowise/services/settings_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
   final fb_auth.FirebaseAuth _auth = fb_auth.FirebaseAuth.instance;
@@ -11,6 +19,8 @@ class AuthService {
   TrackedStreamChatClient? _streamClient;
   bool _isInitializing = false;
   static const String _clientKey = 'stream_chat_client';
+  final LocalAuthentication _localAuth = LocalAuthentication();
+  final SettingsService _settingsService = SettingsService();
 
   // ✅ Get current user
   fb_auth.User? get currentUser => _auth.currentUser;
@@ -29,7 +39,8 @@ class AuthService {
     }
 
     if (_streamClient != null && _streamClient!.state.currentUser != null) {
-      print("✅ Stream Chat already initialized for user: ${_streamClient!.state.currentUser!.id}");
+      print(
+          "✅ Stream Chat already initialized for user: ${_streamClient!.state.currentUser!.id}");
       return;
     }
 
@@ -40,12 +51,12 @@ class AuthService {
       // Try to get existing client from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final savedClient = prefs.getString(_clientKey);
-      
+
       if (savedClient != null) {
         print("🔍 Found existing Stream Chat client");
         final apikey = "8w7w6b93ktuu";
         _streamClient = TrackedStreamChatClient(apikey, userId: userId);
-        
+
         // Try to reconnect with saved token
         final token = await _streamClient!.createToken(userId);
         await _streamClient!.connectUser(
@@ -75,10 +86,12 @@ class AuthService {
 
       // Verify connection
       if (client.state.currentUser == null) {
-        throw Exception("❌ Stream Chat authentication failed - no current user");
+        throw Exception(
+            "❌ Stream Chat authentication failed - no current user");
       }
 
-      print("✅ Stream Chat user authenticated: ${client.state.currentUser!.id}");
+      print(
+          "✅ Stream Chat user authenticated: ${client.state.currentUser!.id}");
       _streamClient = client;
 
       // Save client state
@@ -145,7 +158,7 @@ class AuthService {
       email: email.trim(),
       password: password.trim(),
     );
-    
+
     // Try to reconnect existing client
     await initializeStreamClient(userCredential.user!.uid);
     return userCredential;
@@ -156,12 +169,15 @@ class AuthService {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
     if (googleUser == null) return null;
 
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    final fb_auth.AuthCredential credential = fb_auth.GoogleAuthProvider.credential(
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
+    final fb_auth.AuthCredential credential =
+        fb_auth.GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
-    final fb_auth.UserCredential userCredential = await _auth.signInWithCredential(credential);
+    final fb_auth.UserCredential userCredential =
+        await _auth.signInWithCredential(credential);
     final fb_auth.User? user = userCredential.user;
 
     if (user != null) {
@@ -176,7 +192,7 @@ class AuthService {
     await _streamClient?.disconnectUser();
     await _auth.signOut();
     _streamClient = null;
-    
+
     // Clear saved client
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_clientKey);
@@ -237,5 +253,93 @@ class AuthService {
     await channel.create();
     print("✅ Created new channel: ${channel.id}");
     return channel;
+  }
+
+  Future<bool> authenticateOnStartup(BuildContext? context) async {
+    if (context == null) {
+      print("❌ BuildContext is null. Skipping authentication.");
+      return false; // Return false or handle as needed
+    }
+
+    final isPinEnabled = _settingsService.isPinLockEnabled;
+    final isFingerprintEnabled = _settingsService.isFingerprintEnabled;
+
+    if (isPinEnabled && isFingerprintEnabled) {
+      return await _promptForAuthenticationChoice(context);
+    } else if (isFingerprintEnabled) {
+      return await _authenticateWithFingerprint();
+    } else if (isPinEnabled) {
+      return await _authenticateWithPin();
+    }
+    return true; // No authentication required
+  }
+
+  Future<bool> _promptForAuthenticationChoice(BuildContext context) async {
+    // Use a Completer to wait for user input
+    final completer = Completer<bool>();
+
+    // Show a dialog to let the user choose
+    showDialog(
+      context: context, // Use the passed context
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Choose Authentication Method'),
+          content:
+              const Text('Please select your preferred authentication method.'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                completer.complete(await _authenticateWithFingerprint());
+              },
+              child: const Text('Fingerprint'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                completer.complete(await _authenticateWithPin());
+              },
+              child: const Text('PIN'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return completer.future;
+  }
+
+  Future<bool> _authenticateWithFingerprint() async {
+    return await _localAuth.authenticate(
+      localizedReason: 'Authenticate to access the app',
+      options: const AuthenticationOptions(biometricOnly: true),
+    );
+  }
+
+  Future<bool> _authenticateWithPin() async {
+    final storage = FlutterSecureStorage();
+    final storedPin = await storage.read(key: 'user_pin');
+
+    if (storedPin == null) {
+      print("❌ No PIN found in secure storage.");
+      return false;
+    }
+
+    // Prompt user to enter their PIN (replace with actual UI implementation)
+    final enteredPin = await _promptUserForPin();
+
+    if (enteredPin == storedPin) {
+      print("✅ PIN authentication successful.");
+      return true;
+    } else {
+      print("❌ Incorrect PIN entered.");
+      return false;
+    }
+  }
+
+  Future<String?> _promptUserForPin() async {
+    // Implement UI to prompt the user for their PIN
+    // For now, return a placeholder value
+    return '1234'; // Replace with actual user input
   }
 }

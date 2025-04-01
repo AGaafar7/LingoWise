@@ -54,6 +54,8 @@ dependencies:
   fl_chart: ^0.70.2
   web_socket_channel: ^3.0.2
   stream_chat_flutter: ^9.6.0
+  local_auth: ^2.3.0
+  flutter_secure_storage: ^9.2.4
 
 
 dev_dependencies:

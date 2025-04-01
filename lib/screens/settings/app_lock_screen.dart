@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lingowise/services/settings_service.dart';
 
 class AppLockScreen extends StatefulWidget {
   const AppLockScreen({super.key});
@@ -10,6 +11,21 @@ class AppLockScreen extends StatefulWidget {
 class _AppLockScreenState extends State<AppLockScreen> {
   bool isPinLockEnabled = false;
   bool isFingerprintEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final settings = SettingsService();
+    setState(() {
+      isPinLockEnabled = settings.isPinLockEnabled;
+      isFingerprintEnabled = settings.isFingerprintEnabled;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,20 +45,22 @@ class _AppLockScreenState extends State<AppLockScreen> {
               title: "PIN Lock",
               subtitle: "Add more security with a 6-digit secret PIN",
               value: isPinLockEnabled,
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() {
                   isPinLockEnabled = value;
                 });
+                await SettingsService().setPinLockEnabled(value);
               },
             ),
             _buildToggleOption(
               title: "Fingerprint ID",
               subtitle: "Enable Fingerprint ID to unlock the app",
               value: isFingerprintEnabled,
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() {
                   isFingerprintEnabled = value;
                 });
+                await SettingsService().setFingerprintEnabled(value);
               },
             ),
           ],

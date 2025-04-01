@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:permission_handler/permission_handler.dart'
     as permission_handler;
 import 'package:flutter_contacts/flutter_contacts.dart' as flutter_contacts;
+import 'package:flutter/material.dart'; // Add this import for dialog functionality
 
 class ContactsService {
   final auth_service.AuthService _authService = auth_service.AuthService();
@@ -24,7 +25,9 @@ class ContactsService {
       // Request contacts permission
       final permission = await permission_handler.Permission.contacts.request();
       if (permission.isGranted) {
-        final contacts = await flutter_contacts.FlutterContacts.getContacts();
+        final contacts = await flutter_contacts.FlutterContacts.getContacts(
+          withProperties: true,
+        );
         _deviceContacts = contacts;
         print("✅ Loaded ${_deviceContacts.length} device contacts");
 
@@ -125,13 +128,33 @@ class ContactsService {
   }
 
   Future<void> sendWhatsAppInvite(String phoneNumber) async {
+    // Ensure the phone number starts with a "+" and country code
+    String formattedPhoneNumber = phoneNumber.trim();
+    if (!formattedPhoneNumber.startsWith('+')) {
+      formattedPhoneNumber = '+$formattedPhoneNumber';
+    }
+    formattedPhoneNumber =
+        formattedPhoneNumber.replaceAll(RegExp(r'\s+'), ''); // Remove spaces
+
     const message =
         'Join me on LingoWise! Download the app here: [App Store/Play Store Link]';
     final encodedMessage = Uri.encodeComponent(message);
-    final whatsappUrl = 'https://wa.me/$phoneNumber?text=$encodedMessage';
+    final whatsappUrl =
+        'https://wa.me/$formattedPhoneNumber?text=$encodedMessage';
 
-    if (await url_launcher.canLaunchUrl(Uri.parse(whatsappUrl))) {
-      await url_launcher.launchUrl(Uri.parse(whatsappUrl));
+    // Check if WhatsApp is installed
+    final whatsappSchemeUrl = 'whatsapp://send?phone=$formattedPhoneNumber';
+    print('ℹ️ Checking WhatsApp installation with URL: $whatsappSchemeUrl');
+    if (await url_launcher.canLaunchUrl(Uri.parse(whatsappSchemeUrl))) {
+      print('✅ WhatsApp is installed. Attempting to launch URL: $whatsappUrl');
+      try {
+        await url_launcher.launchUrl(Uri.parse(whatsappUrl));
+      } catch (e) {
+        print('❌ Error launching WhatsApp URL: $e');
+      }
+    } else {
+      print(
+          '❌ WhatsApp is not installed or URL scheme is invalid: $whatsappSchemeUrl');
     }
   }
 
@@ -145,6 +168,47 @@ class ContactsService {
     if (await url_launcher.canLaunchUrl(Uri.parse(mailtoUrl))) {
       await url_launcher.launchUrl(Uri.parse(mailtoUrl));
     }
+  }
+
+  Future<void> showEmailInviteDialog(BuildContext context) async {
+    final emailController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Send Email Invite'),
+          content: TextField(
+            controller: emailController,
+            decoration: const InputDecoration(
+              labelText: 'Enter email address',
+              hintText: 'example@example.com',
+            ),
+            keyboardType: TextInputType.emailAddress,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final email = emailController.text.trim();
+                if (email.isNotEmpty) {
+                  await sendEmailInvite(email);
+                  Navigator.of(dialogContext).pop(); // Close the dialog
+                } else {
+                  print('❌ Email is empty');
+                }
+              },
+              child: const Text('Send'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<stream_chat.Channel?> createDirectMessageChannel(String userId) async {

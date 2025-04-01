@@ -6,6 +6,7 @@ import 'package:lingowise/services/auth_service.dart' as auth;
 import 'package:lingowise/screens/login_screen.dart';
 import 'package:lingowise/screens/home_screen.dart';
 import 'package:lingowise/screens/subscription_screen.dart';
+import 'package:lingowise/screens/auth_failed_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -17,11 +18,13 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> {
   final _authService = auth.AuthService();
   bool _isInitializing = false;
+  bool _isAuthenticated = false;
 
   @override
   void initState() {
     super.initState();
     _initializeStreamClient();
+    _authenticateOnStartup();
   }
 
   Future<void> _initializeStreamClient() async {
@@ -31,21 +34,24 @@ class _AuthWrapperState extends State<AuthWrapper> {
     try {
       final user = _authService.currentUser;
       if (user != null) {
-        print("🔹 Starting Stream Chat initialization in AuthWrapper for user: ${user.uid}");
-        
+        print(
+            "🔹 Starting Stream Chat initialization in AuthWrapper for user: ${user.uid}");
+
         // Check if already initialized
         if (_authService.streamClient?.state.currentUser != null) {
-          print("✅ Stream Chat already initialized for user: ${_authService.streamClient?.state.currentUser?.id}");
+          print(
+              "✅ Stream Chat already initialized for user: ${_authService.streamClient?.state.currentUser?.id}");
           return;
         }
 
         await _authService.initializeStreamClient(user.uid);
-        
+
         // Verify initialization
         if (_authService.streamClient?.state.currentUser == null) {
           print("❌ Stream Chat initialization failed - no current user");
         } else {
-          print("✅ Stream Chat initialized successfully for user: ${_authService.streamClient?.state.currentUser?.id}");
+          print(
+              "✅ Stream Chat initialized successfully for user: ${_authService.streamClient?.state.currentUser?.id}");
         }
       }
     } catch (e) {
@@ -55,8 +61,29 @@ class _AuthWrapperState extends State<AuthWrapper> {
     }
   }
 
+  Future<void> _authenticateOnStartup() async {
+    final isAuthenticated = await _authService.authenticateOnStartup(context);
+    if (!isAuthenticated) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => AuthenticationFailedScreen(
+                  errorMessage: "Failed to authenticate",
+                )),
+      );
+    } else {
+      setState(() {
+        _isAuthenticated = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!_isAuthenticated) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return StreamBuilder<fb_auth.User?>(
       stream: _authService.authStateChanges.cast<fb_auth.User?>(),
       builder: (context, snapshot) {
@@ -72,7 +99,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
           return FutureBuilder<bool>(
             future: _checkSubscriptionStatus(),
             builder: (context, subscriptionSnapshot) {
-              if (subscriptionSnapshot.connectionState == ConnectionState.waiting) {
+              if (subscriptionSnapshot.connectionState ==
+                  ConnectionState.waiting) {
                 return const Scaffold(
                   body: Center(
                     child: CircularProgressIndicator(),
@@ -82,7 +110,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
               if (subscriptionSnapshot.data == true) {
                 final streamClient = _authService.streamClient;
-                if (streamClient == null || streamClient.state.currentUser == null) {
+                if (streamClient == null ||
+                    streamClient.state.currentUser == null) {
                   return const Scaffold(
                     body: Center(
                       child: Text('Error: Stream Chat client not initialized'),

@@ -12,7 +12,8 @@ class ContactsScreen extends StatefulWidget {
 }
 
 class _ContactsScreenState extends State<ContactsScreen> {
-  final contacts_service.ContactsService _contactsService = contacts_service.ContactsService();
+  final contacts_service.ContactsService _contactsService =
+      contacts_service.ContactsService();
   final auth_service.AuthService _authService = auth_service.AuthService();
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
@@ -33,13 +34,15 @@ class _ContactsScreenState extends State<ContactsScreen> {
     await _contactsService.loadDeviceContacts();
 
     // Debugging: Check the length of contacts
-    print("🧑‍🤝‍🧑 Contacts loaded: ${_contactsService.deviceContacts.length}");
+    print(
+        "🧑‍🤝‍🧑 Contacts loaded: ${_contactsService.deviceContacts.length}");
 
     // Load registered users
     await _contactsService.loadDeviceContacts();
 
     // Debugging: Check the length of registered users
-    print("🧑‍🤝‍🧑 Registered users loaded: ${_contactsService.registeredUsers.length}");
+    print(
+        "🧑‍🤝‍🧑 Registered users loaded: ${_contactsService.registeredUsers.length}");
 
     // Update UI if mounted
     if (mounted) {
@@ -90,42 +93,82 @@ class _ContactsScreenState extends State<ContactsScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Check if users are loaded
-    if (_contactsService.registeredUsers.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('No users found'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _initializeChatAndLoadUsers,
-              child: const Text('Refresh'),
+    return ListView(
+      children: [
+        // Section for Direct Chat
+        if (_contactsService.registeredUsers.isNotEmpty) ...[
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'Direct Chat',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: _contactsService.registeredUsers.length,
-      itemBuilder: (context, index) {
-        final user = _contactsService.registeredUsers[index];
-        return GestureDetector(
-          onTap: () {
-            print("✅ GestureDetector tapped on ${user.id}");
-            _handleUserTap(user);
-          },
-          child: ListTile(
-            leading: CircleAvatar(
-              child: Text(user.name.isNotEmpty ? user.name[0] : '?'),
-            ),
-            title: Text(user.name.isNotEmpty ? user.name : 'Unknown'),
-            subtitle: Text(user.id),
-            trailing: const Icon(Icons.chat),
           ),
-        );
-      },
+          ..._contactsService.registeredUsers.map((user) {
+            return GestureDetector(
+              onTap: () {
+                print("✅ GestureDetector tapped on ${user.id}");
+                _handleUserTap(user);
+              },
+              child: ListTile(
+                leading: CircleAvatar(
+                  child: Text(user.name.isNotEmpty ? user.name[0] : '?'),
+                ),
+                title: Text(user.name.isNotEmpty ? user.name : 'Unknown'),
+                subtitle: Text(user.id),
+                trailing: const Icon(Icons.chat),
+              ),
+            );
+          }).toList(),
+        ],
+
+        // Section for All Contacts
+        if (_contactsService.deviceContacts.isNotEmpty) ...[
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'All Contacts',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ..._contactsService.deviceContacts.map((contact) {
+            final isRegistered = _contactsService.isContactRegistered(contact);
+            return ListTile(
+              leading: CircleAvatar(
+                child: Text(contact.displayName.isNotEmpty
+                    ? contact.displayName[0]
+                    : '?'),
+              ),
+              title: Text(contact.displayName.isNotEmpty
+                  ? contact.displayName
+                  : 'Unknown'),
+              subtitle: Text(isRegistered ? 'Registered' : 'Not Registered'),
+              trailing: isRegistered
+                  ? const Icon(Icons.chat, color: Colors.green)
+                  : const Icon(Icons.person_add, color: Colors.grey),
+              onTap: isRegistered
+                  ? () {
+                      final user =
+                          _contactsService.getRegisteredUserForContact(contact);
+                      if (user != null) {
+                        _handleUserTap(user);
+                      }
+                    }
+                  : () async {
+                      final email = contact.emails.isNotEmpty
+                          ? contact.emails.first.address
+                          : null;
+                      if (email != null) {
+                        await _contactsService.sendEmailInvite(email);
+                      } else {
+                        // Show dialog to manually enter email address
+                        await _contactsService.showEmailInviteDialog(context);
+                      }
+                    },
+            );
+          }).toList(),
+        ],
+      ],
     );
   }
 

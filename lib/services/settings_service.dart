@@ -98,6 +98,24 @@ class SettingsService {
     return _prefs.getBool(_readReceiptsKey) ?? true;
   }
 
+  // Pin Lock Settings
+  Future<void> setPinLockEnabled(bool isEnabled) async {
+    await _prefs.setBool('pinLockEnabled', isEnabled);
+  }
+
+  bool get isPinLockEnabled {
+    return _prefs.getBool('pinLockEnabled') ?? false;
+  }
+
+  // Fingerprint Settings
+  Future<void> setFingerprintEnabled(bool isEnabled) async {
+    await _prefs.setBool('fingerprintEnabled', isEnabled);
+  }
+
+  bool get isFingerprintEnabled {
+    return _prefs.getBool('fingerprintEnabled') ?? false;
+  }
+
   // Clear all settings
   Future<void> clearAllSettings() async {
     await _prefs.clear();
