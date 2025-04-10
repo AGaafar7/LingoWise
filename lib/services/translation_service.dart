@@ -1,14 +1,7 @@
-// Dart core imports
 import 'dart:convert';
-
-// Flutter imports
-
-// Third-party package imports
 import 'package:shared_preferences/shared_preferences.dart' as prefs;
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-
-// Local imports
 import 'package:lingowise/services/usage_tracking_service.dart' as usage;
 import 'package:lingowise/services/subscription_service.dart' as subscription;
 
@@ -18,8 +11,7 @@ class TranslationService {
   TranslationService._internal();
 
   late prefs.SharedPreferences _prefs;
-  static const String _apiKey =
-      'AIzaSyAHGIdW9Zz4tGMcDjS_AnQcmwKB-bdH25w';
+  static const String _apiKey = 'AIzaSyAHGIdW9Zz4tGMcDjS_AnQcmwKB-bdH25w';
   static const String _baseUrl =
       'https://translation.googleapis.com/language/translate/v2';
   final usage.UsageTrackingService _usageTracking =
@@ -62,7 +54,6 @@ class TranslationService {
         final translatedText =
             data['data']['translations'][0]['translatedText'];
 
-        // Track usage after successful translation
         await _usageTracking.trackTranslationUsage(
           textLength: text.length,
           sourceLanguage: sourceLang,
@@ -81,29 +72,24 @@ class TranslationService {
   Future<bool> hasEnoughUnits(int textLength) async {
     final subscriptionService = subscription.SubscriptionService();
     final currentUnits = await subscriptionService.getRemainingUnits();
-    // Estimate 1 unit per 100 characters
     final requiredUnits = (textLength / 100).ceil();
     return currentUnits >= requiredUnits;
   }
 
   Future<void> useUnits(int textLength) async {
     final subscriptionService = subscription.SubscriptionService();
-    // Estimate 1 unit per 100 characters
     final requiredUnits = (textLength / 100).ceil();
     await subscriptionService.deductUnits(requiredUnits);
   }
 
-  // Get usage statistics
   Future<Map<String, dynamic>> getUsageStats() async {
     return _usageTracking.getUserUsageStats();
   }
 
-  // Get language usage statistics
   Future<Map<String, int>> getLanguageUsageStats() async {
     return _usageTracking.getLanguageUsageStats();
   }
 
-  // Get usage history
   Future<List<Map<String, dynamic>>> getUsageHistory({
     int limit = 10,
     DateTime? startDate,

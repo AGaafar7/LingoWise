@@ -5,7 +5,7 @@ import 'package:lingowise/services/api_tracking_service.dart';
 class TrackedStreamChatClient extends StreamChatClient {
   final ApiTrackingService _trackingService = ApiTrackingService();
   final String userId;
-  final Dio dio = Dio(); // Create a custom Dio instance
+  final Dio dio = Dio();
 
   TrackedStreamChatClient(String apiKey, {required this.userId})
       : super(apiKey, logLevel: Level.INFO) {
@@ -64,29 +64,24 @@ class TrackedStreamChatClient extends StreamChatClient {
     ));
   }
 
-  /// 🔹 Generate a Stream Chat token (for development)
   Future<String> createToken(String userId) async {
     final token = devToken(userId).rawValue;
-    print("Generated Stream Chat Token: $token");
 
     if (token.isEmpty) {
-      throw Exception("❌ Failed to generate Stream Chat token.");
+      throw Exception("Failed to generate Stream Chat token.");
     }
 
-    // ✅ Set the Authorization header globally for all Dio requests
     dio.options.headers['Authorization'] = "Bearer $token";
 
     return token;
   }
 
-  /// 🔹 Make an API call using Dio instead of modifying StreamChatClient's httpClient
   Future<Response> makeTrackedApiCall(String method, String endpoint,
       {Map<String, dynamic>? queryParams, Map<String, dynamic>? data}) async {
     final startTime = DateTime.now();
 
     try {
       final token = devToken(userId).rawValue;
-      print("Using token for API call: $token");
 
       final options = Options(headers: {
         'Authorization': "Bearer $token",

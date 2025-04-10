@@ -7,7 +7,7 @@ class ThemeProvider extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
 
   ThemeProvider() {
-    _loadTheme(); // Load saved theme
+    _loadTheme();
   }
 
   void toggleTheme(String theme) async {

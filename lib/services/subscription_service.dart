@@ -1,6 +1,3 @@
-// Flutter imports
-
-// Third-party package imports
 import 'package:shared_preferences/shared_preferences.dart' as prefs;
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
@@ -184,7 +181,7 @@ class SubscriptionService {
         await _prefs.setInt('remainingUnits', newUnits);
       } else {
         transaction.set(userRef, {
-          'subscriptionPackageId': 'custom', // You can set an appropriate ID
+          'subscriptionPackageId': 'custom',
           'remainingUnits': units,
           'lastUpdated': firestore.FieldValue.serverTimestamp(),
         });
@@ -194,7 +191,6 @@ class SubscriptionService {
       }
     });
 
-    // Notify listeners about the change
     _notifyListeners(true);
   }
 
