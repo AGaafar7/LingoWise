@@ -19,7 +19,11 @@ void main() async {
   await Firebase.initializeApp();
 
   // Initialize settings service
-  await SettingsService().init();
+  final settingsService = SettingsService();
+  await settingsService.init();
+
+  // Get saved language
+  final savedLanguage = settingsService.getLanguage();
 
   final client = StreamChatClient(
     '8w7w6b93ktuu',
@@ -28,13 +32,40 @@ void main() async {
 
   final authService = AuthService();
 
-  runApp(MyApp(client: client));
+  runApp(MyApp(
+    client: client,
+    initialLocale: Locale(savedLanguage),
+  ));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final StreamChatClient client;
+  final Locale initialLocale;
 
-  const MyApp({super.key, required this.client});
+  const MyApp({
+    super.key,
+    required this.client,
+    required this.initialLocale,
+  });
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late Locale _locale;
+
+  @override
+  void initState() {
+    super.initState();
+    _locale = widget.initialLocale;
+  }
+
+  void _setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +78,7 @@ class MyApp extends StatelessWidget {
             theme: appThemeLight,
             darkTheme: appThemeDark,
             themeMode: themeProvider.themeMode,
+            locale: _locale,
             localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
@@ -73,8 +105,8 @@ class MyApp extends StatelessWidget {
             ],
             navigatorKey: navigatorKey,
             home: StreamChat(
-              client: client,
-              child: AuthWrapper(),
+              client: widget.client,
+              child: AuthWrapper(onLocaleChange: _setLocale),
             ),
           );
         },

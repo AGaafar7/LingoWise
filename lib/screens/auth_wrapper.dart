@@ -9,7 +9,8 @@ import 'package:lingowise/screens/subscription_screen.dart';
 import 'package:lingowise/screens/auth_failed_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
-  const AuthWrapper({super.key});
+  final Function(Locale) onLocaleChange;
+  const AuthWrapper({super.key, required this.onLocaleChange});
 
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
@@ -121,11 +122,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
                 return stream.StreamChat(
                   client: streamClient,
-                  child: const HomeScreen(),
+                  child: const HomeScreen(onLocaleChange: onLocaleChange),
                 );
               }
 
-              return const SubscriptionScreen();
+              return const SubscriptionScreen(onLocaleChange: onLocaleChange);
             },
           );
         }
