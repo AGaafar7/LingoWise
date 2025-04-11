@@ -4,7 +4,9 @@ import 'package:lingowise/custom/customs.dart';
 import 'package:lingowise/screens/screens.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+  final Function(Locale) onLocaleChange;
+  
+  const SettingsScreen({super.key, required this.onLocaleChange});
 
   @override
   Widget build(BuildContext context) {
@@ -36,46 +38,25 @@ class SettingsScreen extends StatelessWidget {
                     "Language, theme, chat background",
                     "Privacy policy, terms & conditions",
                   ];
-                  return InkWell(
+                  final List<Widget> screens = [
+                    AccountControlScreen(onLocaleChange: onLocaleChange),
+                    const PrivacyControlScreen(),
+                    ChatControlScreen(onLocaleChange: onLocaleChange),
+                    const HelpScreen(),
+                  ];
+
+                  return ListTile(
+                    leading: Icon(leadingIcons[index]),
+                    title: Text(titles[index]),
+                    subtitle: Text(tilesSubtitle[index]),
                     onTap: () {
-                      if (index == 0) {
-                        //Show Account Page
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AccountControlScreen(),
-                          ),
-                        );
-                      } else if (index == 1) {
-                        //Show Privacy Page
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PrivacyControlScreen(),
-                          ),
-                        );
-                      } else if (index == 2) {
-                        //Show Chat Control Page
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ChatControlScreen(),
-                          ),
-                        );
-                      } else if (index == 3) {
-                        //Show Help Page
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const HelpScreen()),
-                        );
-                      }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => screens[index],
+                        ),
+                      );
                     },
-                    child: SettingsTile(
-                      leadingIcon: Icon(leadingIcons[index]),
-                      tileTitle: titles[index],
-                      tileSubtitle: tilesSubtitle[index],
-                      trailingIcon: const Icon(Icons.arrow_forward_ios_rounded),
-                    ),
                   );
                 },
                 itemCount: 4,

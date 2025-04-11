@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:lingowise/screens/main_screen.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart' as stream;
 import 'package:shared_preferences/shared_preferences.dart' as prefs;
 import 'package:lingowise/services/auth_service.dart' as auth;
@@ -122,11 +123,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
                 return stream.StreamChat(
                   client: streamClient,
-                  child: const HomeScreen(onLocaleChange: onLocaleChange),
+                  child: MainScreen(onLocaleChange: widget.onLocaleChange),
                 );
               }
 
-              return const SubscriptionScreen(onLocaleChange: onLocaleChange);
+              return SubscriptionScreen();
             },
           );
         }

@@ -4,7 +4,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lingowise/screens/screens.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final Function(Locale) onLocaleChange;
+  
+  const LoginScreen({super.key, required this.onLocaleChange});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -29,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_auth.currentUser != null && mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
+        MaterialPageRoute(builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange)),
       );
     }
   }
@@ -46,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
+        MaterialPageRoute(builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange)),
       );
     } catch (e) {
       _showErrorSnackBar(_getFriendlyErrorMessage(e));
@@ -71,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
+        MaterialPageRoute(builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange)),
       );
     } catch (e) {
       _showErrorSnackBar(_getFriendlyErrorMessage(e));
@@ -155,7 +157,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => RegisterScreen(onLocaleChange: widget.onLocaleChange),
+                    ),
                   );
                 },
                 child: const Text("Don't have an account? Register"),

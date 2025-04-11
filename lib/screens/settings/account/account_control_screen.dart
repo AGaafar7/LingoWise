@@ -3,7 +3,9 @@ import 'package:lingowise/custom/settings_tile.dart';
 import 'package:lingowise/screens/screens.dart';
 
 class AccountControlScreen extends StatefulWidget {
-  const AccountControlScreen({super.key});
+  final Function(Locale) onLocaleChange;
+  
+  const AccountControlScreen({super.key, required this.onLocaleChange});
 
   @override
   State<AccountControlScreen> createState() => _AccountControlScreenState();
@@ -75,7 +77,11 @@ class _AccountControlScreenState extends State<AccountControlScreen> {
                     } else if (index == 4) {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => LoginScreen(
+                            onLocaleChange: widget.onLocaleChange,
+                          ),
+                        ),
                       );
                     }
                   },

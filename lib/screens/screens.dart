@@ -15,7 +15,7 @@ export 'auth/register_screen.dart';
 export 'auth/phone_verification_screen.dart';
 
 export 'chat_screen.dart';
-export 'auth/auth_wrapper.dart';
 export 'agora__call_screen.dart';
 export '../services/agora_service.dart';
 export '../services/stream_chat_service.dart';
+export '../screens/auth_wrapper.dart';

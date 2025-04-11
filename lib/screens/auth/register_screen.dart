@@ -4,7 +4,9 @@ import 'package:lingowise/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final Function(Locale) onLocaleChange;
+  
+  const RegisterScreen({super.key, required this.onLocaleChange});
 
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
@@ -139,7 +141,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _navigateToMainScreen() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const MainScreen()),
+      MaterialPageRoute(
+        builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange),
+      ),
     );
   }
 
@@ -207,7 +211,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => LoginScreen(
+                        onLocaleChange: widget.onLocaleChange,
+                      ),
+                    ),
                   );
                 },
                 child: const Text("Already have an account? Login"),

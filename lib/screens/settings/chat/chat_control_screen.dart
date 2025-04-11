@@ -18,14 +18,14 @@ class _ChatControlScreenState extends State<ChatControlScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.chatSettings),
+        title: Text(AppLocalizations.of(context)!.settings),
       ),
       body: ListView(
         children: [
           ListTile(
             leading: const Icon(Icons.language),
             title: Text(AppLocalizations.of(context)!.language),
-            subtitle: Text(AppLocalizations.of(context)!.currentLanguage),
+            subtitle: Text(AppLocalizations.of(context)!.language),
             onTap: () async {
               final selectedLanguage = await Navigator.push<String>(
                 context,

@@ -3,18 +3,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lingowise/screens/screens.dart';
 
 class PhoneVerificationScreen extends StatefulWidget {
-  const PhoneVerificationScreen({super.key});
+  final Function(Locale) onLocaleChange;
+  
+  const PhoneVerificationScreen({super.key, required this.onLocaleChange});
 
   @override
-  _PhoneVerificationScreenState createState() =>
-      _PhoneVerificationScreenState();
+  _PhoneVerificationScreenState createState() => _PhoneVerificationScreenState();
 }
 
 class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final _formKey = GlobalKey<FormState>(); // ✅ Form Key for validation
+  final _formKey = GlobalKey<FormState>();
   String? _verificationId;
   bool isLoading = false;
   bool isVerifying = false;
@@ -77,15 +78,15 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   void _navigateToMainScreen() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const MainScreen()),
+      MaterialPageRoute(
+        builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange),
+      ),
     );
   }
 
   // ✅ Show SnackBar
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

@@ -4,7 +4,9 @@ import 'package:lingowise/screens/screens.dart';
 import 'package:lingowise/services/auth_service.dart' show AuthService;
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final Function(Locale) onLocaleChange;
+  
+  const MainScreen({super.key, required this.onLocaleChange});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -13,10 +15,19 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int currIndex = 0;
   final _authService = AuthService();
+  late final List<Widget> screens;
 
   @override
   void initState() {
     super.initState();
+    // Initialize screens list
+    screens = [
+      const ChatMainScreen(),
+      const CallsScreen(),
+      ContactsScreen(),
+      SettingsScreen(onLocaleChange: widget.onLocaleChange),
+    ];
+    
     // Listen to auth state changes but don't initialize Stream Chat here
     // as it's already handled in AuthWrapper
     FirebaseAuth.instance.authStateChanges().listen((user) {
@@ -33,13 +44,6 @@ class _MainScreenState extends State<MainScreen> {
       currIndex = index;
     });
   }
-
-  final List<Widget> screens = [
-    const ChatMainScreen(),
-    const CallsScreen(),
-    ContactsScreen(),
-    const SettingsScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
