@@ -10,6 +10,7 @@ import 'package:lingowise/theme/theme_provider.dart';
 import 'package:lingowise/services/settings_service.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lingowise/services/auth_service.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -46,9 +47,31 @@ class MyApp extends StatelessWidget {
             theme: appThemeLight,
             darkTheme: appThemeDark,
             themeMode: themeProvider.themeMode,
-            localizationsDelegates: GlobalMaterialLocalizations.delegates,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', 'US'), // English
+              Locale('ar', 'SA'), // Arabic
+              Locale('de', 'DE'), // German
+              Locale('fr', 'FR'), // French
+              Locale('es', 'ES'), // Spanish
+              Locale('pt', 'PT'), // Portuguese
+              Locale('ru', 'RU'), // Russian
+              Locale('zh', 'CN'), // Chinese
+              Locale('ja', 'JP'), // Japanese
+              Locale('ko', 'KR'), // Korean
+              Locale('hi', 'IN'), // Hindi
+              Locale('ms', 'MY'), // Malay
+              Locale('tr', 'TR'), // Turkish
+              Locale('id', 'ID'), // Indonesian
+              Locale('bn', 'BD'), // Bengali
+              Locale('vi', 'VN'), // Vietnamese
+            ],
             navigatorKey: navigatorKey,
-            supportedLocales: const [Locale('en', 'US')],
             home: StreamChat(
               client: client,
               child: AuthWrapper(),
