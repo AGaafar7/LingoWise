@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:lingowise/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ChatControlScreen extends StatefulWidget {
-  const ChatControlScreen({super.key});
+  final Function(Locale) onLocaleChange;
+
+  const ChatControlScreen({super.key, required this.onLocaleChange});
 
   @override
   State<ChatControlScreen> createState() => _ChatControlScreenState();
 }
 
 class _ChatControlScreenState extends State<ChatControlScreen> {
-  String selectedOption = "Everyone";
+  String selectedOption = "en";
 
   void _showLanguageDialog() {
-    //save the the selected theme in the app and reload with that theme
     showModalBottomSheet(
       context: context,
       backgroundColor:
@@ -40,13 +42,193 @@ class _ChatControlScreenState extends State<ChatControlScreen> {
                   const SizedBox(height: 16),
                   RadioListTile<String>(
                     title: const Text("English"),
-                    value: "English",
+                    value: "en",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('en'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Spanish"),
+                    value: "es",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('es'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("French"),
+                    value: "fr",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('fr'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("German"),
+                    value: "de",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('de'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Arabic"),
+                    value: "ar",
                     groupValue: selectedOption,
                     onChanged: (value) {
                       setState(() {
                         selectedOption = value!;
                       });
                       Navigator.pop(context, selectedOption);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Portuguese"),
+                    value: "pt",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('pt'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Russian"),
+                    value: "ru",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('ru'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Chinese"),
+                    value: "zh",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('zh'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Japanese"),
+                    value: "ja",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('ja'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Korean"),
+                    value: "ko",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('ko'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Hindi"),
+                    value: "hi",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('hi'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Malay"),
+                    value: "ms",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('ms'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Turkish"),
+                    value: "tr",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('tr'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Indonesian"),
+                    value: "id",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('id'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Bengali"),
+                    value: "bn",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('bn'));
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text("Vietnamese"),
+                    value: "vi",
+                    groupValue: selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedOption = value!;
+                      });
+                      widget.onLocaleChange(const Locale('vi'));
+                      Navigator.pop(context);
                     },
                   ),
                 ],
@@ -91,10 +273,9 @@ class _ChatControlScreenState extends State<ChatControlScreen> {
                   RadioListTile<String>(
                     title: const Text("Dark"),
                     value: "Dark",
-                    groupValue:
-                        themeProvider.themeMode == ThemeMode.dark
-                            ? "Dark"
-                            : "Light",
+                    groupValue: themeProvider.themeMode == ThemeMode.dark
+                        ? "Dark"
+                        : "Light",
                     onChanged: (value) {
                       themeProvider.toggleTheme(value!);
                       Navigator.pop(context);
@@ -103,10 +284,9 @@ class _ChatControlScreenState extends State<ChatControlScreen> {
                   RadioListTile<String>(
                     title: const Text("Light"),
                     value: "Light",
-                    groupValue:
-                        themeProvider.themeMode == ThemeMode.light
-                            ? "Light"
-                            : "Dark",
+                    groupValue: themeProvider.themeMode == ThemeMode.light
+                        ? "Light"
+                        : "Dark",
                     onChanged: (value) {
                       themeProvider.toggleTheme(value!);
                       Navigator.pop(context);
@@ -140,8 +320,7 @@ class _ChatControlScreenState extends State<ChatControlScreen> {
             title: "Language",
             subtitle: "English",
             onTap: () {
-              // Handle language selection
-              _showLanguageDialog();
+              // Handle "English"wLanguageDialog();
             },
           ),
           _buildSettingOption(

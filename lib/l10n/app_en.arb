@@ -36,5 +36,12 @@
     "usageHistory": "Usage History",
     "inviteYourContact": "Invite Your Contact",
     "noCallRecords": "You don’t have any call records to display.",
-    "startCalling": "To start calling, tap the call button below."
+    "startCalling": "To start calling, tap the call button below.",
+    "appTitle": "LingoWise",
+    "welcomeMessage": "Welcome to LingoWise!",
+    "calls": "Calls",
+    "contacts": "Contacts",
+    "dark": "Dark",
+    "light": "Light",
+    "systemDefault": "System Default"
 }

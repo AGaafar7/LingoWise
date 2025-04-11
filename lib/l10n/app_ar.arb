@@ -36,5 +36,12 @@
   "usageHistory": "سجل الاستخدام",
   "inviteYourContact": "ادعُ صديقك",
   "noCallRecords": "لا توجد سجلات مكالمات لعرضها.",
-  "startCalling": "لبدء الاتصال، اضغط على زر الاتصال أدناه."
+  "startCalling": "لبدء الاتصال، اضغط على زر الاتصال أدناه.",
+  "appTitle": "لينجو وايز",
+  "welcomeMessage": "مرحبًا بك في لينجو وايز!",
+  "calls": "المكالمات",
+  "contacts": "جهات الاتصال",
+  "dark": "داكن",
+  "light": "فاتح",
+  "systemDefault": "النظام الافتراضي"
 }

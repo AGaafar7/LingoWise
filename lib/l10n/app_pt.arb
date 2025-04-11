@@ -36,5 +36,12 @@
     "usageHistory": "Histórico de uso",
     "inviteYourContact": "Convide seu contato",
     "noCallRecords": "Não há registros de chamadas para exibir.",
-    "startCalling": "Para começar a ligar, toque no botão de chamada abaixo."
+    "startCalling": "Para começar a ligar, toque no botão de chamada abaixo.",
+    "appTitle": "LingoWise",
+    "welcomeMessage": "Bem-vindo ao LingoWise!",
+    "calls": "Chamadas",
+    "contacts": "Contatos",
+    "dark": "Escuro",
+    "light": "Claro",
+    "systemDefault": "Padrão do sistema"
 }

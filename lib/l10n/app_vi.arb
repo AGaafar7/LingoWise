@@ -36,5 +36,14 @@
     "usageHistory": "Lịch sử sử dụng",
     "inviteYourContact": "Mời liên hệ của bạn",
     "noCallRecords": "Không có bản ghi cuộc gọi nào để hiển thị.",
-    "startCalling": "Để bắt đầu gọi, hãy nhấn vào nút gọi bên dưới."
+    "startCalling": "Để bắt đầu gọi, hãy nhấn vào nút gọi bên dưới.",
+    "appTitle": "LingoWise",
+    "welcomeMessage": "Chào mừng đến với LingoWise!",
+    "calls": "Cuộc gọi",
+    "contacts": "Danh bạ",
+    "dark": "Tối",
+    "light": "Sáng",
+    "systemDefault": "Mặc định hệ thống",
+    "renewSubscription": "Gia hạn",
+    "lowOnUnits": "Đơn vị còn lại thấp! Hãy cân nhắc gia hạn."
 }

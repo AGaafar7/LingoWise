@@ -36,5 +36,12 @@
     "usageHistory": "Kullanım geçmişi",
     "inviteYourContact": "Kişinizi davet edin",
     "noCallRecords": "Görüntülenecek çağrı kaydı yok.",
-    "startCalling": "Aramaya başlamak için aşağıdaki arama düğmesine dokunun."
+    "startCalling": "Aramaya başlamak için aşağıdaki arama düğmesine dokunun.",
+    "appTitle": "LingoWise",
+    "welcomeMessage": "LingoWise'a hoş geldiniz!",
+    "calls": "Aramalar",
+    "contacts": "Kişiler",
+    "dark": "Koyu",
+    "light": "Açık",
+    "systemDefault": "Sistem Varsayılanı"
 }

@@ -36,5 +36,12 @@
     "usageHistory": "使用历史",
     "inviteYourContact": "邀请您的联系人",
     "noCallRecords": "没有通话记录可显示。",
-    "startCalling": "要开始通话，请点击下面的通话按钮。"
+    "startCalling": "要开始通话，请点击下面的通话按钮。",
+    "appTitle": "LingoWise",
+    "welcomeMessage": "欢迎使用 LingoWise!",
+    "calls": "通话",
+    "contacts": "联系人",
+    "dark": "深色",
+    "light": "浅色",
+    "systemDefault": "系统默认"
 }
