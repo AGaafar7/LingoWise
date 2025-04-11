@@ -342,4 +342,20 @@ class AuthService {
     // For now, return a placeholder value
     return '1234'; // Replace with actual user input
   }
+
+  // ✅ Update username
+  Future<void> updateUsername(String userId, String username) async {
+    // Check if username exists
+    if (await isUsernameTaken(username)) {
+      throw Exception('Username already taken, please choose another one.');
+    }
+
+    // Update username in Firestore
+    await _firestore.collection('users').doc(userId).update({
+      'username': username,
+    });
+
+    // Update display name in Firebase Auth
+    await _auth.currentUser?.updateDisplayName(username);
+  }
 }

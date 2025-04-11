@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lingowise/screens/screens.dart';
+import 'package:lingowise/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final Function(Locale) onLocaleChange;
@@ -13,10 +14,13 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>(); // 🔹 Form validation key
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
+  String? _verificationId;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -28,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _checkUserLoggedIn() async {
     await Future.delayed(const Duration(milliseconds: 500));
-    if (_auth.currentUser != null && mounted) {
+    if (_authService.currentUser != null && mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange)),
@@ -36,78 +40,150 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // ✅ Login with Email & Password
   Future<void> _loginWithEmail() async {
-    if (!_formKey.currentState!.validate()) return; // 🔹 Validate inputs
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showErrorDialog("Please enter both email and password");
+      return;
+    }
 
+    setState(() => _isLoading = true);
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+      await _authService.signIn(
+        email: _emailController.text,
+        password: _passwordController.text,
       );
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange)),
-      );
+      _navigateToMainScreen();
     } catch (e) {
-      _showErrorSnackBar(_getFriendlyErrorMessage(e));
+      _showErrorDialog(e.toString());
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
-  // ✅ Login with Google
   Future<void> _loginWithGoogle() async {
+    setState(() => _isLoading = true);
     try {
-      await GoogleSignIn().signOut(); // 🔹 Prevents cached issues
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return;
+      final user = await _authService.signInWithGoogle();
+      if (user != null) {
+        _navigateToMainScreen();
+      }
+    } catch (e) {
+      _showErrorDialog(e.toString());
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+  Future<void> _loginWithPhone() async {
+    final phoneNumber = _phoneController.text.trim();
+    if (phoneNumber.isEmpty) {
+      _showErrorDialog("Please enter your phone number");
+      return;
+    }
 
-      await _auth.signInWithCredential(credential);
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange)),
+    setState(() => _isLoading = true);
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await FirebaseAuth.instance.signInWithCredential(credential);
+          _navigateToMainScreen();
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          _showErrorDialog("Verification failed: ${e.message}");
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          setState(() {
+            _verificationId = verificationId;
+            _isLoading = false;
+          });
+          _showOTPDialog();
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          setState(() => _verificationId = verificationId);
+        },
       );
     } catch (e) {
-      _showErrorSnackBar(_getFriendlyErrorMessage(e));
+      _showErrorDialog(e.toString());
+      setState(() => _isLoading = false);
     }
   }
 
-  // ✅ Friendly Error Messages
-  String _getFriendlyErrorMessage(dynamic error) {
-    String errorMessage = "Something went wrong. Please try again.";
-
-    if (error is FirebaseAuthException) {
-      switch (error.code) {
-        case 'user-not-found':
-          errorMessage = "No user found with this email.";
-          break;
-        case 'wrong-password':
-          errorMessage = "Incorrect password. Please try again.";
-          break;
-        case 'invalid-email':
-          errorMessage = "Invalid email address format.";
-          break;
-        case 'network-request-failed':
-          errorMessage = "No internet connection.";
-          break;
-      }
+  Future<void> _verifyOTP(String otp) async {
+    if (_verificationId == null) {
+      _showErrorDialog("No verification ID found. Please request a new OTP.");
+      return;
     }
 
-    return errorMessage;
+    setState(() => _isLoading = true);
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId!,
+        smsCode: otp,
+      );
+      await FirebaseAuth.instance.signInWithCredential(credential);
+      _navigateToMainScreen();
+    } catch (e) {
+      _showErrorDialog("OTP verification failed. Try again.");
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(
+  void _showOTPDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Enter OTP"),
+        content: TextField(
+          controller: _otpController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            hintText: "Enter the 6-digit code",
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _verifyOTP(_otpController.text);
+            },
+            child: const Text("Verify"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Error"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToMainScreen() {
+    Navigator.pushReplacement(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+      MaterialPageRoute(
+        builder: (_) => OnboardingScreen(
+          onLocaleChange: widget.onLocaleChange,
+        ),
+      ),
+    );
   }
 
   @override
@@ -116,56 +192,65 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(title: const Text("Login")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Please enter your email.";
-                  }
-                  return null;
-                },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: "Email"),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _passwordController,
+              decoration: const InputDecoration(labelText: "Password"),
+              obscureText: true,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _loginWithEmail,
+              child: _isLoading
+                  ? const CircularProgressIndicator()
+                  : const Text("Login with Email"),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _loginWithGoogle,
+              child: _isLoading
+                  ? const CircularProgressIndicator()
+                  : const Text("Login with Google"),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _phoneController,
+              decoration: const InputDecoration(
+                labelText: "Phone Number",
+                hintText: "+1234567890",
               ),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: "Password"),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Please enter your password.";
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _loginWithEmail,
-                child: const Text("Login with Email"),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _loginWithGoogle,
-                child: const Text("Login with Google"),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RegisterScreen(onLocaleChange: widget.onLocaleChange),
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _loginWithPhone,
+              child: _isLoading
+                  ? const CircularProgressIndicator()
+                  : const Text("Login with Phone"),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RegisterScreen(
+                      onLocaleChange: widget.onLocaleChange,
                     ),
-                  );
-                },
-                child: const Text("Don't have an account? Register"),
-              ),
-            ],
-          ),
+                  ),
+                );
+              },
+              child: const Text("Don't have an account? Register"),
+            ),
+          ],
         ),
       ),
     );

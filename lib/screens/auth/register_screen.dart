@@ -20,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
   String? _verificationId;
+  bool _isLoading = false;
 
   // ✅ Check if the username exists
   Future<bool> _isUsernameTaken(String username) async {
@@ -43,6 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    setState(() => _isLoading = true);
     try {
       final userCredential = await _authService.signUp(
         email: email,
@@ -55,18 +57,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (e) {
       _showErrorDialog(e.toString());
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
   // ✅ Register with Google
   Future<void> _registerWithGoogle() async {
+    setState(() => _isLoading = true);
     try {
       final user = await _authService.signInWithGoogle();
       if (user != null) {
-        _navigateToMainScreen();
+        // Check if username is needed
+        if (user.displayName == null || user.displayName!.isEmpty) {
+          _showUsernameDialog(user.uid);
+        } else {
+          _navigateToMainScreen();
+        }
       }
     } catch (e) {
       _showErrorDialog(e.toString());
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -78,26 +90,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: phoneNumber,
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        await FirebaseAuth.instance.signInWithCredential(credential);
-        _navigateToMainScreen();
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        _showErrorDialog("Verification failed: ${e.message}");
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        setState(() {
-          _verificationId = verificationId;
-        });
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        setState(() {
-          _verificationId = verificationId;
-        });
-      },
-    );
+    setState(() => _isLoading = true);
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+          if (userCredential.user != null) {
+            _showUsernameDialog(userCredential.user!.uid);
+          }
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          _showErrorDialog("Verification failed: ${e.message}");
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          setState(() {
+            _verificationId = verificationId;
+            _isLoading = false;
+          });
+          _showOTPDialog();
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          setState(() => _verificationId = verificationId);
+        },
+      );
+    } catch (e) {
+      _showErrorDialog(e.toString());
+      setState(() => _isLoading = false);
+    }
   }
 
   // ✅ Verify OTP
@@ -107,17 +127,92 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    setState(() => _isLoading = true);
     try {
       final credential = PhoneAuthProvider.credential(
         verificationId: _verificationId!,
         smsCode: otp,
       );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
-      _navigateToMainScreen();
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      if (userCredential.user != null) {
+        _showUsernameDialog(userCredential.user!.uid);
+      }
     } catch (e) {
       _showErrorDialog("OTP verification failed. Try again.");
+    } finally {
+      setState(() => _isLoading = false);
     }
+  }
+
+  void _showUsernameDialog(String userId) {
+    final usernameController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Choose Username"),
+        content: TextField(
+          controller: usernameController,
+          decoration: const InputDecoration(
+            hintText: "Enter your username",
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              final username = usernameController.text.trim();
+              if (username.isEmpty) {
+                _showErrorDialog("Username cannot be empty");
+                return;
+              }
+
+              final isTaken = await _isUsernameTaken(username);
+              if (isTaken) {
+                _showErrorDialog("Username is already taken");
+                return;
+              }
+
+              Navigator.pop(context);
+              await _authService.updateUsername(userId, username);
+              _navigateToMainScreen();
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showOTPDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Enter OTP"),
+        content: TextField(
+          controller: _otpController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            hintText: "Enter the 6-digit code",
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _verifyOTP(_otpController.text);
+            },
+            child: const Text("Verify"),
+          ),
+        ],
+      ),
+    );
   }
 
   // ✅ Show Error Dialog
@@ -142,7 +237,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange),
+        builder: (_) => OnboardingScreen(
+          onLocaleChange: widget.onLocaleChange,
+        ),
       ),
     );
   }
@@ -173,13 +270,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: _registerWithEmail,
-                child: const Text("Register with Email"),
+                onPressed: _isLoading ? null : _registerWithEmail,
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text("Register with Email"),
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: _registerWithGoogle,
-                child: const Text("Register with Google"),
+                onPressed: _isLoading ? null : _registerWithGoogle,
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text("Register with Google"),
               ),
               const SizedBox(height: 10),
               TextField(
@@ -188,25 +289,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 keyboardType: TextInputType.phone,
               ),
               ElevatedButton(
-                onPressed: _registerWithPhone,
-                child: const Text("Register with Phone"),
+                onPressed: _isLoading ? null : _registerWithPhone,
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text("Register with Phone"),
               ),
-              if (_verificationId != null)
-                Column(
-                  children: [
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: _otpController,
-                      decoration: const InputDecoration(labelText: "Enter OTP"),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () => _verifyOTP(_otpController.text.trim()),
-                      child: const Text("Verify OTP"),
-                    ),
-                  ],
-                ),
               TextButton(
                 onPressed: () {
                   Navigator.push(
