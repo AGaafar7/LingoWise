@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lingowise/screens/screens.dart';
 import 'package:lingowise/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lingowise/screens/onboarding/onboarding_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   final Function(Locale) onLocaleChange;

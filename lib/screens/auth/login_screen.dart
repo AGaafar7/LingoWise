@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lingowise/screens/screens.dart';
 import 'package:lingowise/services/auth_service.dart';
+import 'package:lingowise/screens/onboarding/onboarding_screen.dart';
+
 
 class LoginScreen extends StatefulWidget {
   final Function(Locale) onLocaleChange;
