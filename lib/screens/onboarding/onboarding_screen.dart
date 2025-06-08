@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lingowise/screens/screens.dart';
 import 'package:lingowise/services/settings_service.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:lingowise/l10n/app_localizations.dart';
 import 'package:lingowise/screens/subscription_screen.dart';
 import 'package:lingowise/main.dart';
 
@@ -26,7 +26,7 @@ const supportedLocales = [
 
 class OnboardingScreen extends StatefulWidget {
   final Function(Locale) onLocaleChange;
-  
+
   const OnboardingScreen({super.key, required this.onLocaleChange});
 
   @override
@@ -42,10 +42,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     try {
       // Save the selected language
       await _settingsService.setLanguage(languageCode);
-      
+
       // Update the app locale
       widget.onLocaleChange(Locale(languageCode));
-      
+
       // Navigate to subscription screen
       if (mounted) {
         Navigator.pushReplacement(
@@ -96,12 +96,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       itemCount: supportedLocales.length,
                       itemBuilder: (context, index) {
                         final locale = supportedLocales[index];
-                        final languageName = _getLanguageName(locale.languageCode);
-                        
+                        final languageName =
+                            _getLanguageName(locale.languageCode);
+
                         return ListTile(
                           title: Text(languageName),
                           trailing: Text(locale.languageCode.toUpperCase()),
-                          onTap: () => _saveLanguageAndNavigate(locale.languageCode),
+                          onTap: () =>
+                              _saveLanguageAndNavigate(locale.languageCode),
                         );
                       },
                     ),
@@ -150,4 +152,4 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         return languageCode.toUpperCase();
     }
   }
-} 
+}

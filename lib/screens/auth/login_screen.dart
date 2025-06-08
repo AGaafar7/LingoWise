@@ -5,10 +5,9 @@ import 'package:lingowise/screens/screens.dart';
 import 'package:lingowise/services/auth_service.dart';
 import 'package:lingowise/screens/onboarding/onboarding_screen.dart';
 
-
 class LoginScreen extends StatefulWidget {
   final Function(Locale) onLocaleChange;
-  
+
   const LoginScreen({super.key, required this.onLocaleChange});
 
   @override
@@ -37,7 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_authService.currentUser != null && mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange)),
+        MaterialPageRoute(
+            builder: (_) => MainScreen(onLocaleChange: widget.onLocaleChange)),
       );
     }
   }
@@ -70,7 +70,15 @@ class _LoginScreenState extends State<LoginScreen> {
         _navigateToMainScreen();
       }
     } catch (e) {
-      _showErrorDialog(e.toString());
+      String errorMessage = 'An error occurred during Google sign in';
+      if (e.toString().contains('sign_in_canceled')) {
+        errorMessage = 'Google sign in was cancelled';
+      } else if (e.toString().contains('network_error')) {
+        errorMessage = 'Please check your internet connection';
+      } else if (e.toString().contains('invalid_credential')) {
+        errorMessage = 'Invalid credentials. Please try again';
+      }
+      _showErrorDialog(errorMessage);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -192,67 +200,159 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Login")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextFormField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: "Email"),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: "Password"),
-              obscureText: true,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _loginWithEmail,
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text("Login with Email"),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _loginWithGoogle,
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text("Login with Google"),
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _phoneController,
-              decoration: const InputDecoration(
-                labelText: "Phone Number",
-                hintText: "+1234567890",
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 16.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Welcome Back!",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _loginWithPhone,
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text("Login with Phone"),
-            ),
-            const SizedBox(height: 20),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RegisterScreen(
-                      onLocaleChange: widget.onLocaleChange,
-                    ),
+              const SizedBox(height: 30),
+              // Email Login Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      const Text(
+                        "Login with Email",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: "Email",
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _passwordController,
+                        decoration: const InputDecoration(
+                          labelText: "Password",
+                          border: OutlineInputBorder(),
+                        ),
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _loginWithEmail,
+                          child: _isLoading
+                              ? const CircularProgressIndicator()
+                              : const Text("Login with Email"),
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
-              child: const Text("Don't have an account? Register"),
-            ),
-          ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Social Login Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      const Text(
+                        "Or login with",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      Center(
+                        child: SizedBox(
+                          width: 250,
+                          child: ElevatedButton.icon(
+                            onPressed: _isLoading ? null : _loginWithGoogle,
+                            icon: Image.asset(
+                              'assets/images/google_logo.png',
+                              height: 20,
+                            ),
+                            label: const Text("Continue with Google"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Phone Login Section
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      const Text(
+                        "Login with Phone",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _phoneController,
+                        decoration: const InputDecoration(
+                          labelText: "Phone Number",
+                          hintText: "+1234567890",
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.phone,
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _loginWithPhone,
+                          child: _isLoading
+                              ? const CircularProgressIndicator()
+                              : const Text("Login with Phone"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Don't have an account?"),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RegisterScreen(
+                            onLocaleChange: widget.onLocaleChange,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("Register"),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

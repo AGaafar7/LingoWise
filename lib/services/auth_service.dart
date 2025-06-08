@@ -166,25 +166,60 @@ class AuthService {
 
   // ✅ Sign in with Google
   Future<fb_auth.User?> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) return null;
+    try {
+      // Initialize Google Sign In
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: [
+          'email',
+          'profile',
+        ],
+      );
 
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
-    final fb_auth.AuthCredential credential =
-        fb_auth.GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-    final fb_auth.UserCredential userCredential =
-        await _auth.signInWithCredential(credential);
-    final fb_auth.User? user = userCredential.user;
+      // Sign out first to clear any cached credentials
+      await googleSignIn.signOut();
 
-    if (user != null) {
-      // Try to reconnect existing client
-      await initializeStreamClient(user.uid);
+      // Start the sign in flow
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception('Google sign in was cancelled');
+      }
+
+      // Get the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      // Create a new credential
+      final fb_auth.AuthCredential credential = fb_auth.GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase with the Google credential
+      final fb_auth.UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final fb_auth.User? user = userCredential.user;
+
+      if (user != null) {
+        // Check if user document exists in Firestore
+        final userDoc = await _firestore.collection('users').doc(user.uid).get();
+
+        if (!userDoc.exists) {
+          // Create user document if it doesn't exist
+          await _firestore.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'email': user.email,
+            'username': user.displayName ?? user.email?.split('@')[0] ?? 'user_${user.uid.substring(0, 8)}',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        // Initialize Stream Chat
+        await initializeStreamClient(user.uid);
+      }
+
+      return user;
+    } catch (e) {
+      print('Error signing in with Google: $e');
+      rethrow;
     }
-    return user;
   }
 
   // ✅ Sign out

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:lingowise/l10n/app_localizations.dart';
 import 'package:lingowise/services/settings_service.dart';
 
 class LanguageSelectionScreen extends StatefulWidget {

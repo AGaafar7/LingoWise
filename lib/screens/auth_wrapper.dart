@@ -4,7 +4,7 @@ import 'package:lingowise/screens/main_screen.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart' as stream;
 import 'package:shared_preferences/shared_preferences.dart' as prefs;
 import 'package:lingowise/services/auth_service.dart' as auth;
-import 'package:lingowise/screens/login_screen.dart';
+import 'package:lingowise/screens/auth/login_screen.dart';
 import 'package:lingowise/screens/home_screen.dart';
 import 'package:lingowise/screens/subscription_screen.dart';
 import 'package:lingowise/screens/auth_failed_screen.dart';
@@ -132,7 +132,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
           );
         }
 
-        return const LoginScreen();
+        return LoginScreen(
+          onLocaleChange: widget.onLocaleChange,
+        );
       },
     );
   }

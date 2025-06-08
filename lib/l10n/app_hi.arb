@@ -1,6 +1,7 @@
 {
     "@@locale": "hi",
     "welcomeBack": "वापसी पर स्वागत है",
+    "@welcomeBack": {},
     "createAccount": "खाता बनाएं",
     "login": "लॉग इन करें",
     "signUp": "साइन अप करें",

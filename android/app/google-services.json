@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "392405607881-4l50fqgfu2v87gim9uej2s4dk0efn7b7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.agaafar.lingowise",
+            "certificate_hash": "80f075b18b855554cc6edda947b85c3626b35559"
+          }
+        },
+        {
           "client_id": "392405607881-0tnmiq2e7d09ftgpuionqp4kbsaabj7j.apps.googleusercontent.com",
           "client_type": 3
         }

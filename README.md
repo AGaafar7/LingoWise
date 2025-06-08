@@ -1,16 +1,51 @@
-# lingowise
+# 🌍 LingoWise
 
-A new Flutter project.
+**LingoWise** is a Flutter mobile application designed to **break language barriers** in real-time voice communication. It allows users to translate voice calls instantly, exchange multilingual messages, and manage their communication experience with ease.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🚀 Features
 
-A few resources to get you started if this is your first Flutter project:
+- 🎙️ **Real-Time Voice Call Translation**  
+  Instantly translates live voice calls between users in different languages.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- 📝 **Text Translation + Media Sharing**  
+  Translate text messages and exchange images, videos, and documents seamlessly.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- 🎧 **Call Recording Support**  
+  Automatically records translated calls for playback and review.
+
+- 🧩 **Admin Dashboard**  
+  Manage users, monitor activity, and control app features from a built-in dashboard.
+
+- 💳 **Online Payments & Subscriptions**  
+  Secure, in-app payments using various methods—credit card, PayPal, local wallets, and more.
+
+- 🌐 **Global Accessibility**  
+  Works across all countries and supports **all major languages**.
+
+---
+
+## 📱 Screenshots
+
+*(Coming Soon)*
+
+---
+
+## ⚙️ Getting Started
+
+### Prerequisites
+
+- Flutter SDK (3.0+ recommended)
+- Dart SDK
+- Android Studio or VS Code
+- Firebase account (if using cloud features)
+- Stripe/PayPal keys for payment setup (if testing subscription flow)
+
+### Installation
+
+```bash
+git clone https://github.com/AGaafar7/LingoWise.git
+cd LingoWise
+flutter pub get
+flutter run

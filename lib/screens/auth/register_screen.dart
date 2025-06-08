@@ -248,56 +248,100 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Register")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(
+        title: const Text('Register'),
+      ),
+      body: SafeArea(
         child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 16.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+          ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextField(
-                controller: _usernameController,
-                decoration: const InputDecoration(labelText: "Username"),
-              ),
+              // Email Registration Form
               TextField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
               ),
+              const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: "Password"),
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
                 obscureText: true,
               ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _registerWithEmail,
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text("Register with Email"),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  labelText: 'Username',
+                  border: OutlineInputBorder(),
+                ),
               ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _registerWithGoogle,
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text("Register with Google"),
+              const SizedBox(height: 24),
+              // Email Register Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _registerWithEmail,
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('Register with Email'),
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
+              // Google Register Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _registerWithGoogle,
+                  icon: Image.asset(
+                    'assets/images/google_logo.png',
+                    height: 24,
+                  ),
+                  label: const Text('Register with Google'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Phone Number Registration
               TextField(
                 controller: _phoneController,
-                decoration: const InputDecoration(labelText: "Phone Number"),
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  border: OutlineInputBorder(),
+                  prefixText: '+',
+                ),
                 keyboardType: TextInputType.phone,
               ),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _registerWithPhone,
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text("Register with Phone"),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _registerWithPhone,
+                  child: _isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('Register with Phone'),
+                ),
               ),
+              const SizedBox(height: 16),
+              // Login Link
               TextButton(
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
                       builder: (_) => LoginScreen(
@@ -306,7 +350,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   );
                 },
-                child: const Text("Already have an account? Login"),
+                child: const Text('Already have an account? Login'),
               ),
             ],
           ),

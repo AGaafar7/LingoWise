@@ -10,8 +10,9 @@ import 'package:lingowise/theme/theme_provider.dart';
 import 'package:lingowise/services/settings_service.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart';
 import 'package:lingowise/services/auth_service.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:lingowise/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
+import 'package:lingowise/screens/main_chat_screen.dart';
 import 'dart:io' show Platform;
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -40,18 +41,19 @@ const supportedLocales = [
 Locale getDeviceLocale() {
   final String defaultLocale = Platform.localeName;
   final List<String> localeParts = defaultLocale.split('_');
-  
+
   if (localeParts.length >= 2) {
     final languageCode = localeParts[0].toLowerCase();
     final countryCode = localeParts[1].toUpperCase();
-    
+
     // First try to match both language and country
     for (final locale in supportedLocales) {
-      if (locale.languageCode == languageCode && locale.countryCode == countryCode) {
+      if (locale.languageCode == languageCode &&
+          locale.countryCode == countryCode) {
         return locale;
       }
     }
-    
+
     // If no exact match, try to match just the language
     for (final locale in supportedLocales) {
       if (locale.languageCode == languageCode) {
@@ -59,7 +61,7 @@ Locale getDeviceLocale() {
       }
     }
   }
-  
+
   // If no match found, return English as default
   return const Locale('en', 'US');
 }
@@ -75,11 +77,10 @@ void main() async {
   // Get saved language or device language
   final savedLanguage = settingsService.getLanguage();
   final deviceLocale = getDeviceLocale();
-  
+
   // Use saved language if available, otherwise use device language
-  final initialLocale = savedLanguage.isNotEmpty 
-      ? Locale(savedLanguage) 
-      : deviceLocale;
+  final initialLocale =
+      savedLanguage.isNotEmpty ? Locale(savedLanguage) : deviceLocale;
 
   final client = StreamChatClient(
     '8w7w6b93ktuu',
@@ -145,7 +146,9 @@ class _MyAppState extends State<MyApp> {
             navigatorKey: navigatorKey,
             home: StreamChat(
               client: widget.client,
-              child: AuthWrapper(onLocaleChange: _setLocale),
+              child: MainScreen(
+                onLocaleChange: _setLocale,
+              ),
             ),
           );
         },
